@@ -1,8 +1,6 @@
 project:
   type: default
   output-dir: docs
-  render:
-    - reports/**/*.qmd
   resources:
     - .nojekyll
 
