@@ -1,1 +1,1 @@
-# technical_report_temporal_sampling_binary_event
+# Scientific Reports
