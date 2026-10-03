@@ -8,6 +8,7 @@ on:
     paths:
       - "reports/**"
       - "styles/**"
+      - "includes/**"
       - "_extensions/nature/**"
       - "_quarto.yml"
       - ".nojekyll"
@@ -25,18 +26,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Quarto
+      - name: Set up Quarto and TinyTeX
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: "1.10.18"
+          tinytex: true
 
-      - name: Render reports
+      - name: Render HTML reports
         run: quarto render
+
+      - name: Render Springer Nature PDFs
+        run: |
+          find reports -mindepth 2 -maxdepth 2 -name index.qmd -print0 | while IFS= read -r -d '' report; do
+            quarto render "$report" --to nature-pdf
+          done
+
+      - name: Publish source Quarto Markdown
+        run: |
+          find reports -mindepth 2 -maxdepth 2 -name index.qmd -print0 | while IFS= read -r -d '' report; do
+            destination="docs/$(dirname "$report")"
+            mkdir -p "$destination"
+            cp "$report" "$destination/index.qmd"
+          done
 
       - name: Preserve GitHub Pages configuration
         run: touch docs/.nojekyll
 
-      - name: Commit rendered HTML
+      - name: Commit rendered reports
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -44,6 +60,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No rendered changes."
           else
-            git commit -m "Render Quarto HTML reports [skip ci]"
+            git commit -m "Render Quarto HTML and PDF reports [skip ci]"
             git push
           fi
