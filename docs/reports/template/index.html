@@ -352,7 +352,7 @@ Tabela&nbsp;1: Exemplo de tabela técnica.
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">journal</span><span class="kw">:</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">cite-style</span><span class="kw">:</span><span class="at"> sn-nature</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cite-method</span><span class="kw">:</span><span class="at"> natbib</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
-<p>A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages.</p>
+<p>A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages. Cada relatório também é renderizado em PDF com o formato <code>nature-pdf</code>, e o HTML disponibiliza controles flutuantes para download do arquivo fonte Quarto Markdown e do PDF.</p>
 </section>
 <section id="reprodutibilidade" class="level1" data-number="14">
 <h1 data-number="14"><span class="header-section-number">14</span> Reprodutibilidade</h1>
@@ -408,6 +408,20 @@ Tabela&nbsp;1: Exemplo de tabela técnica.
 
 </main>
 <!-- /main column -->
+<div class="report-download-actions" aria-label="Downloads do relatório">
+  <a href="index.qmd" download="" title="Baixar fonte Quarto Markdown (.qmd)" aria-label="Baixar fonte Quarto Markdown">
+    <svg viewbox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm0 2.5L17.5 8H14zM8 13h8v2H8zm0 4h8v2H8z"></path>
+    </svg>
+    <span class="download-label">Markdown</span>
+  </a>
+  <a href="index.pdf" download="" title="Baixar PDF" aria-label="Baixar PDF">
+    <svg viewbox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm0 2.5L17.5 8H14zM8 12h2.3c1.7 0 2.7.9 2.7 2.4s-1 2.4-2.7 2.4H9.5V19H8zm1.5 1.4v2h.7c.8 0 1.2-.3 1.2-1s-.4-1-1.2-1zm4.2-1.4H16c2.2 0 3.5 1.3 3.5 3.5S18.2 19 16 19h-2.3zm1.5 1.4v4.2h.7c1.3 0 2-.7 2-2.1s-.7-2.1-2-2.1z"></path>
+    </svg>
+    <span class="download-label">PDF</span>
+  </a>
+</div>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
