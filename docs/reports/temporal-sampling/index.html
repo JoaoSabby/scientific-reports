@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="João B. G. de Brito">
+<meta name="keywords" content="amostragem temporal, landmarking, eventos raros, classificação binária, predição longitudinal, risk-set sampling">
+
+<title>Estratégias de Amostragem Temporal para Predição Binária de Eventos Raros</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-5512be24678217c83c999907ff91d92d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles/nature-report.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Conteúdo</h2>
+   
+  <ul>
+  <li><a href="#sec-introducao" id="toc-sec-introducao" class="nav-link active" data-scroll-target="#sec-introducao"><span class="header-section-number">1</span> Introdução</a></li>
+  <li><a href="#sec-contribuicao" id="toc-sec-contribuicao" class="nav-link" data-scroll-target="#sec-contribuicao"><span class="header-section-number">2</span> Contribuição metodológica e escopo</a></li>
+  <li><a href="#sec-notacao" id="toc-sec-notacao" class="nav-link" data-scroll-target="#sec-notacao"><span class="header-section-number">3</span> Estrutura temporal e notação</a>
+  <ul class="collapse">
+  <li><a href="#índices-e-processo-de-eventos" id="toc-índices-e-processo-de-eventos" class="nav-link" data-scroll-target="#índices-e-processo-de-eventos"><span class="header-section-number">3.1</span> Índices e processo de eventos</a></li>
+  <li><a href="#feature-window" id="toc-feature-window" class="nav-link" data-scroll-target="#feature-window"><span class="header-section-number">3.2</span> Feature Window</a></li>
+  <li><a href="#prediction-horizon" id="toc-prediction-horizon" class="nav-link" data-scroll-target="#prediction-horizon"><span class="header-section-number">3.3</span> Prediction Horizon</a></li>
+  </ul></li>
+  <li><a href="#sec-single" id="toc-sec-single" class="nav-link" data-scroll-target="#sec-single"><span class="header-section-number">4</span> Estratégia I: Single Landmark</a>
+  <ul class="collapse">
+  <li><a href="#definição-formal" id="toc-definição-formal" class="nav-link" data-scroll-target="#definição-formal"><span class="header-section-number">4.1</span> Definição formal</a></li>
+  <li><a href="#representação-temporal" id="toc-representação-temporal" class="nav-link" data-scroll-target="#representação-temporal"><span class="header-section-number">4.2</span> Representação temporal</a></li>
+  <li><a href="#propriedades-estatísticas" id="toc-propriedades-estatísticas" class="nav-link" data-scroll-target="#propriedades-estatísticas"><span class="header-section-number">4.3</span> Propriedades estatísticas</a></li>
+  </ul></li>
+  <li><a href="#sec-multiple" id="toc-sec-multiple" class="nav-link" data-scroll-target="#sec-multiple"><span class="header-section-number">5</span> Estratégia II: Multiple Landmarks</a>
+  <ul class="collapse">
+  <li><a href="#definição-formal-1" id="toc-definição-formal-1" class="nav-link" data-scroll-target="#definição-formal-1"><span class="header-section-number">5.1</span> Definição formal</a></li>
+  <li><a href="#janelas-não-sobrepostas" id="toc-janelas-não-sobrepostas" class="nav-link" data-scroll-target="#janelas-não-sobrepostas"><span class="header-section-number">5.2</span> Janelas não sobrepostas</a></li>
+  <li><a href="#proposição-1-cobertura-temporal-com-stride-igual-ao-horizonte" id="toc-proposição-1-cobertura-temporal-com-stride-igual-ao-horizonte" class="nav-link" data-scroll-target="#proposição-1-cobertura-temporal-com-stride-igual-ao-horizonte"><span class="header-section-number">5.3</span> Proposição 1: cobertura temporal com stride igual ao horizonte</a></li>
+  <li><a href="#estimando-e-interpretação" id="toc-estimando-e-interpretação" class="nav-link" data-scroll-target="#estimando-e-interpretação"><span class="header-section-number">5.4</span> Estimando e interpretação</a></li>
+  </ul></li>
+  <li><a href="#sec-event" id="toc-sec-event" class="nav-link" data-scroll-target="#sec-event"><span class="header-section-number">6</span> Estratégia III: Event-Based Sampling</a>
+  <ul class="collapse">
+  <li><a href="#definição-operacional" id="toc-definição-operacional" class="nav-link" data-scroll-target="#definição-operacional"><span class="header-section-number">6.1</span> Definição operacional</a></li>
+  <li><a href="#proposição-2-condicionamento-da-posição-do-evento" id="toc-proposição-2-condicionamento-da-posição-do-evento" class="nav-link" data-scroll-target="#proposição-2-condicionamento-da-posição-do-evento"><span class="header-section-number">6.2</span> Proposição 2: condicionamento da posição do evento</a></li>
+  <li><a href="#relação-com-risk-set-e-incidence-density-sampling" id="toc-relação-com-risk-set-e-incidence-density-sampling" class="nav-link" data-scroll-target="#relação-com-risk-set-e-incidence-density-sampling"><span class="header-section-number">6.3</span> Relação com risk-set e incidence-density sampling</a></li>
+  <li><a href="#proposição-3-alteração-das-probabilidades-pela-seleção-de-classes" id="toc-proposição-3-alteração-das-probabilidades-pela-seleção-de-classes" class="nav-link" data-scroll-target="#proposição-3-alteração-das-probabilidades-pela-seleção-de-classes"><span class="header-section-number">6.4</span> Proposição 3: alteração das probabilidades pela seleção de classes</a></li>
+  </ul></li>
+  <li><a href="#sec-comparacao" id="toc-sec-comparacao" class="nav-link" data-scroll-target="#sec-comparacao"><span class="header-section-number">7</span> Comparação formal das estratégias</a></li>
+  <li><a href="#sec-raros" id="toc-sec-raros" class="nav-link" data-scroll-target="#sec-raros"><span class="header-section-number">8</span> Implicações para eventos raros</a>
+  <ul class="collapse">
+  <li><a href="#informação-adicional-sem-geração-sintética" id="toc-informação-adicional-sem-geração-sintética" class="nav-link" data-scroll-target="#informação-adicional-sem-geração-sintética"><span class="header-section-number">8.1</span> Informação adicional sem geração sintética</a></li>
+  <li><a href="#rareza-e-avaliação-discriminativa" id="toc-rareza-e-avaliação-discriminativa" class="nav-link" data-scroll-target="#rareza-e-avaliação-discriminativa"><span class="header-section-number">8.2</span> Rareza e avaliação discriminativa</a></li>
+  <li><a href="#mistura-temporal-em-multiple-landmarks" id="toc-mistura-temporal-em-multiple-landmarks" class="nav-link" data-scroll-target="#mistura-temporal-em-multiple-landmarks"><span class="header-section-number">8.3</span> Mistura temporal em Multiple Landmarks</a></li>
+  </ul></li>
+  <li><a href="#sec-validacao" id="toc-sec-validacao" class="nav-link" data-scroll-target="#sec-validacao"><span class="header-section-number">9</span> Protocolo de validação metodológica</a>
+  <ul class="collapse">
+  <li><a href="#conjunto-de-teste-fixo-e-representativo" id="toc-conjunto-de-teste-fixo-e-representativo" class="nav-link" data-scroll-target="#conjunto-de-teste-fixo-e-representativo"><span class="header-section-number">9.1</span> Conjunto de teste fixo e representativo</a></li>
+  <li><a href="#separação-temporal" id="toc-separação-temporal" class="nav-link" data-scroll-target="#separação-temporal"><span class="header-section-number">9.2</span> Separação temporal</a></li>
+  <li><a href="#agrupamento-por-indivíduo" id="toc-agrupamento-por-indivíduo" class="nav-link" data-scroll-target="#agrupamento-por-indivíduo"><span class="header-section-number">9.3</span> Agrupamento por indivíduo</a></li>
+  <li><a href="#métricas" id="toc-métricas" class="nav-link" data-scroll-target="#métricas"><span class="header-section-number">9.4</span> Métricas</a></li>
+  </ul></li>
+  <li><a href="#sec-plano" id="toc-sec-plano" class="nav-link" data-scroll-target="#sec-plano"><span class="header-section-number">10</span> Plano de avaliação empírica</a>
+  <ul class="collapse">
+  <li><a href="#cenários-mínimos" id="toc-cenários-mínimos" class="nav-link" data-scroll-target="#cenários-mínimos"><span class="header-section-number">10.1</span> Cenários mínimos</a></li>
+  <li><a href="#quantidades-a-reportar" id="toc-quantidades-a-reportar" class="nav-link" data-scroll-target="#quantidades-a-reportar"><span class="header-section-number">10.2</span> Quantidades a reportar</a></li>
+  <li><a href="#hipóteses-metodológicas-testáveis" id="toc-hipóteses-metodológicas-testáveis" class="nav-link" data-scroll-target="#hipóteses-metodológicas-testáveis"><span class="header-section-number">10.3</span> Hipóteses metodológicas testáveis</a></li>
+  </ul></li>
+  <li><a href="#sec-algoritmos" id="toc-sec-algoritmos" class="nav-link" data-scroll-target="#sec-algoritmos"><span class="header-section-number">11</span> Algoritmos de construção</a>
+  <ul class="collapse">
+  <li><a href="#single-landmark" id="toc-single-landmark" class="nav-link" data-scroll-target="#single-landmark"><span class="header-section-number">11.1</span> Single Landmark</a></li>
+  <li><a href="#multiple-landmarks" id="toc-multiple-landmarks" class="nav-link" data-scroll-target="#multiple-landmarks"><span class="header-section-number">11.2</span> Multiple Landmarks</a></li>
+  <li><a href="#event-based-sampling" id="toc-event-based-sampling" class="nav-link" data-scroll-target="#event-based-sampling"><span class="header-section-number">11.3</span> Event-Based Sampling</a></li>
+  </ul></li>
+  <li><a href="#sec-escolha" id="toc-sec-escolha" class="nav-link" data-scroll-target="#sec-escolha"><span class="header-section-number">12</span> Critérios de escolha</a></li>
+  <li><a href="#sec-vieses" id="toc-sec-vieses" class="nav-link" data-scroll-target="#sec-vieses"><span class="header-section-number">13</span> Validade, vieses e ameaças metodológicas</a>
+  <ul class="collapse">
+  <li><a href="#leakage-temporal" id="toc-leakage-temporal" class="nav-link" data-scroll-target="#leakage-temporal"><span class="header-section-number">13.1</span> Leakage temporal</a></li>
+  <li><a href="#dependência-por-repetição-do-indivíduo" id="toc-dependência-por-repetição-do-indivíduo" class="nav-link" data-scroll-target="#dependência-por-repetição-do-indivíduo"><span class="header-section-number">13.2</span> Dependência por repetição do indivíduo</a></li>
+  <li><a href="#drift-temporal" id="toc-drift-temporal" class="nav-link" data-scroll-target="#drift-temporal"><span class="header-section-number">13.3</span> Drift temporal</a></li>
+  <li><a href="#censura-e-observabilidade-do-horizonte" id="toc-censura-e-observabilidade-do-horizonte" class="nav-link" data-scroll-target="#censura-e-observabilidade-do-horizonte"><span class="header-section-number">13.4</span> Censura e observabilidade do horizonte</a></li>
+  <li><a href="#eventos-recorrentes" id="toc-eventos-recorrentes" class="nav-link" data-scroll-target="#eventos-recorrentes"><span class="header-section-number">13.5</span> Eventos recorrentes</a></li>
+  </ul></li>
+  <li><a href="#sec-reprodutibilidade" id="toc-sec-reprodutibilidade" class="nav-link" data-scroll-target="#sec-reprodutibilidade"><span class="header-section-number">14</span> Reprodutibilidade e especificação mínima</a></li>
+  <li><a href="#sec-discussao" id="toc-sec-discussao" class="nav-link" data-scroll-target="#sec-discussao"><span class="header-section-number">15</span> Discussão</a></li>
+  <li><a href="#sec-limitacoes" id="toc-sec-limitacoes" class="nav-link" data-scroll-target="#sec-limitacoes"><span class="header-section-number">16</span> Limitações</a></li>
+  <li><a href="#sec-conclusao" id="toc-sec-conclusao" class="nav-link" data-scroll-target="#sec-conclusao"><span class="header-section-number">17</span> Conclusão</a></li>
+  <li><a href="#sec-declaracoes" id="toc-sec-declaracoes" class="nav-link" data-scroll-target="#sec-declaracoes"><span class="header-section-number">18</span> Declarações</a>
+  <ul class="collapse">
+  <li><a href="#disponibilidade-de-dados" id="toc-disponibilidade-de-dados" class="nav-link" data-scroll-target="#disponibilidade-de-dados"><span class="header-section-number">18.1</span> Disponibilidade de dados</a></li>
+  <li><a href="#disponibilidade-de-código" id="toc-disponibilidade-de-código" class="nav-link" data-scroll-target="#disponibilidade-de-código"><span class="header-section-number">18.2</span> Disponibilidade de código</a></li>
+  <li><a href="#aspectos-éticos" id="toc-aspectos-éticos" class="nav-link" data-scroll-target="#aspectos-éticos"><span class="header-section-number">18.3</span> Aspectos éticos</a></li>
+  <li><a href="#conflitos-de-interesse" id="toc-conflitos-de-interesse" class="nav-link" data-scroll-target="#conflitos-de-interesse"><span class="header-section-number">18.4</span> Conflitos de interesse</a></li>
+  <li><a href="#financiamento" id="toc-financiamento" class="nav-link" data-scroll-target="#financiamento"><span class="header-section-number">18.5</span> Financiamento</a></li>
+  <li><a href="#contribuições-dos-autores" id="toc-contribuições-dos-autores" class="nav-link" data-scroll-target="#contribuições-dos-autores"><span class="header-section-number">18.6</span> Contribuições dos autores</a></li>
+  </ul></li>
+  <li><a href="#sec-referencias" id="toc-sec-referencias" class="nav-link" data-scroll-target="#sec-referencias"><span class="header-section-number">19</span> Referências</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Estratégias de Amostragem Temporal para Predição Binária de Eventos Raros</h1>
+<p class="subtitle lead">Formalização metodológica de Single Landmark, Multiple Landmarks e Event-Based Sampling</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Autor</div>
+    <div class="quarto-title-meta-contents">
+             <p>João B. G. de Brito </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Resumo</div>
+    <p>A construção temporal da amostra é uma decisão metodológica central em modelos preditivos binários baseados em dados longitudinais, especialmente quando o evento de interesse é raro. Este trabalho formaliza e compara três estratégias de amostragem temporal: Single Landmark, Multiple Landmarks e Event-Based Sampling. Propõe-se uma notação unificada que separa a construção das features, o instante de referência, o horizonte de predição e o mecanismo de amostragem temporal. Para cada estratégia são definidos o estimando preditivo, a regra de construção da variável resposta, a estrutura da amostra, as condições de elegibilidade e as principais fontes de dependência, viés e desalinhamento entre treinamento e aplicação. Demonstra-se que o uso de múltiplos landmarks com janelas de predição não sobrepostas permite incorporar eventos raros reais de períodos históricos adicionais sem alterar a definição do target, embora produza observações repetidas por indivíduo e uma distribuição temporal composta. Em contraste, a amostragem orientada ao evento condiciona a escolha do tempo de referência à própria ocorrência do desfecho e, quando empregada para enriquecimento da classe positiva, modifica a distribuição amostral e exige tratamento explícito da seleção para interpretação probabilística. Apresenta-se ainda um protocolo de validação destinado à comparação das estratégias sob prevalência natural, com separação temporal, controle de dependência por indivíduo, avaliação por precision-recall, calibração e medidas de erro probabilístico. A formalização fornece uma taxonomia operacional para sistemas de machine learning destinados à predição de eventos raros em bases longitudinais.</p>
+  </div>
+</div>
+
+<div>
+  <div class="keywords">
+    <div class="block-title">Palavras-chave</div>
+    <p>amostragem temporal, landmarking, eventos raros, classificação binária, predição longitudinal, risk-set sampling</p>
+  </div>
+</div>
+
+</header>
+
+
+<section id="sec-introducao" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introdução</h1>
+<p>Problemas de classificação binária construídos a partir de bases longitudinais exigem uma definição explícita de três componentes temporais: o conjunto de informações disponível para a construção das features, o instante em que a predição é conceitualmente realizada e o intervalo futuro no qual o evento é procurado. Em aplicações com eventos raros, uma quarta decisão torna-se especialmente relevante: quantos instantes históricos devem contribuir para a amostra de treinamento.</p>
+<p>A literatura de análise de sobrevivência e predição dinâmica formalizou o conceito de <em>landmarking</em> como uma estratégia na qual a predição é condicionada às informações disponíveis em um instante temporal de referência, denominado <em>landmark time</em>. O modelo é ajustado para indivíduos elegíveis naquele instante e a predição é realizada para um horizonte futuro previamente especificado<span class="citation" data-cites="vanHouwelingen2007 vanHouwelingenPutter2012"><sup><a href="#ref-vanHouwelingen2007" role="doc-biblioref">1</a>, pp.&nbsp;70-85,<a href="#ref-vanHouwelingenPutter2012" role="doc-biblioref">2</a>, pp.&nbsp;105-116</sup></span>. Trabalhos posteriores mostraram que datasets produzidos em diferentes landmarks podem ser empilhados em uma única estrutura de estimação, permitindo compartilhar informação entre tempos de referência<span class="citation" data-cites="tanner2021"><sup><a href="#ref-tanner2021" role="doc-biblioref">3</a>, pp.&nbsp;3-30</sup></span>.</p>
+<p>Em paralelo, desenhos retrospectivos orientados pela ocorrência do evento constituem uma família metodológica distinta. Na epidemiologia, quando cada caso define um instante e controles são selecionados entre os indivíduos que permanecem sob risco naquele instante, o desenho é denominado <em>risk-set sampling</em> ou <em>incidence-density sampling</em><span class="citation" data-cites="prenticeBreslow1978 greenlandThomas1982"><sup><a href="#ref-prenticeBreslow1978" role="doc-biblioref">4</a>, pp.&nbsp;153-158,<a href="#ref-greenlandThomas1982" role="doc-biblioref">5</a>, pp.&nbsp;547-553</sup></span>. Abordagens de <em>case-base sampling</em> também constroem amostras orientadas à informação de eventos e tempo em risco, porém com mecanismos de amostragem e estimandos específicos<span class="citation" data-cites="hanleyMiettinen2009 bhatnagar2022"><sup><a href="#ref-hanleyMiettinen2009" role="doc-biblioref">6</a>, pp.&nbsp;1-25,<a href="#ref-bhatnagar2022" role="doc-biblioref">7</a>, pp.&nbsp;59-79</sup></span>.</p>
+<p>O objetivo deste artigo metodológico é estabelecer uma taxonomia unificada para três estratégias relevantes em sistemas de predição binária longitudinal: <strong>Single Landmark</strong>, <strong>Multiple Landmarks</strong> e <strong>Event-Based Sampling</strong>. O foco não é propor um novo estimador paramétrico, mas formalizar o desenho de dados que precede o ajuste do algoritmo preditivo. A distinção é particularmente importante em aplicações de eventos raros, nas quais o aumento do número de eventos observados no treinamento pode ser obtido por ampliação temporal da amostra, em vez de depender exclusivamente de reamostragem sintética ou alteração direta da distribuição de classes.</p>
+</section>
+<section id="sec-contribuicao" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Contribuição metodológica e escopo</h1>
+<p>A contribuição deste trabalho consiste em separar quatro dimensões que frequentemente são tratadas como uma única decisão de modelagem:</p>
+<ol type="1">
+<li><strong>Feature Window</strong>: estrutura temporal utilizada para construir as covariáveis preditoras.</li>
+<li><strong>Landmark Time</strong>: instante temporal no qual as informações são consideradas disponíveis para predição.</li>
+<li><strong>Prediction Horizon</strong>: extensão futura utilizada para definir o target.</li>
+<li><strong>Temporal Sampling Strategy</strong>: regra que determina quais landmarks ou eventos históricos originam registros na amostra de treinamento.</li>
+</ol>
+<p>Essa separação permite comparar os três desenhos sem confundir construção de features, definição do target e amostragem temporal. Em particular, a passagem de Single Landmark para Multiple Landmarks não modifica necessariamente a variável resposta. O que se altera é o conjunto de tempos de referência incluídos no treinamento.</p>
+<p>O termo <strong>Event-Based Sampling</strong> é empregado neste trabalho como categoria operacional ampla para desenhos nos quais a ocorrência do evento determina retrospectivamente o tempo de referência das covariáveis. Esse termo não deve ser interpretado como sinônimo automático de <em>risk-set sampling</em>, <em>incidence-density sampling</em> ou <em>case-base sampling</em>. Tais denominações possuem definições estatísticas próprias e dependem, entre outros aspectos, da forma de seleção dos controles e do estimando pretendido<span class="citation" data-cites="prenticeBreslow1978 saarela2016"><sup><a href="#ref-prenticeBreslow1978" role="doc-biblioref">4</a>, pp.&nbsp;153-158,<a href="#ref-saarela2016" role="doc-biblioref">8</a>, pp.&nbsp;589-605</sup></span>.</p>
+</section>
+<section id="sec-notacao" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Estrutura temporal e notação</h1>
+<section id="índices-e-processo-de-eventos" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="índices-e-processo-de-eventos"><span class="header-section-number">3.1</span> Índices e processo de eventos</h2>
+<p>Considere uma população de indivíduos <span class="math inline">\(i=1,\ldots,n\)</span> observada em tempo discreto mensal <span class="math inline">\(t \in \mathcal{T}\)</span>. Seja <span class="math inline">\(\mathbf{X}_i(t)\)</span> o vetor de features disponível para o indivíduo <span class="math inline">\(i\)</span> no encerramento do período <span class="math inline">\(t\)</span>.</p>
+<p>Para um evento que pode ocorrer uma única vez, define-se <span class="math inline">\(T_i\)</span> como o tempo de ocorrência do evento. Para eventos potencialmente recorrentes, utiliza-se o processo de contagem <span class="math inline">\(N_i(t)\)</span>, de modo que</p>
+<p><span class="math display">\[
+N_i(t+H)-N_i(t)
+\]</span></p>
+<p>representa o número de ocorrências observadas após <span class="math inline">\(t\)</span> e até <span class="math inline">\(t+H\)</span>.</p>
+<p>Seja ainda <span class="math inline">\(E_i(t) \in \{0,1\}\)</span> o indicador de elegibilidade do indivíduo no tempo <span class="math inline">\(t\)</span>. Em problemas de primeiro evento, uma definição comum é</p>
+<p><span class="math display">\[
+E_i(t)=I(T_i&gt;t),
+\]</span></p>
+<p>mas, em eventos recorrentes, a regra de elegibilidade pode ser definida pelo processo de negócio ou pelo protocolo científico.</p>
+</section>
+<section id="feature-window" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="feature-window"><span class="header-section-number">3.2</span> Feature Window</h2>
+<p>O vetor <span class="math inline">\(\mathbf{X}_i(t)\)</span> pode combinar diferentes mecanismos temporais de construção de features. Três componentes são particularmente úteis:</p>
+<p><strong>Snapshot feature</strong>: valor observado no próprio tempo de referência,</p>
+<p><span class="math display">\[
+X_{ij}^{\text{snap}}(t)=Z_{ij}(t).
+\]</span></p>
+<p><strong>Summary window</strong>: resumo estatístico dos últimos <span class="math inline">\(A\)</span> períodos,</p>
+<p><span class="math display">\[
+X_{ij}^{\text{sum}}(t;A)
+=
+g_j\left\{Z_{ij}(t-A+1),\ldots,Z_{ij}(t)\right\},
+\]</span></p>
+<p>em que <span class="math inline">\(g_j(\cdot)\)</span> pode representar média, mediana, soma, desvio padrão ou outra função de sumarização.</p>
+<p><strong>Lookback window</strong>: extensão retrospectiva máxima <span class="math inline">\(L\)</span> utilizada por features dependentes da trajetória histórica. Para frequência de eventos, por exemplo,</p>
+<p><span class="math display">\[
+X_i^{\text{freq}}(t;L)
+=
+N_i(t)-N_i(t-L).
+\]</span></p>
+<p>Para recência, uma forma possível é</p>
+<p><span class="math display">\[
+X_i^{\text{rec}}(t;L)
+=
+t-\max\{u: t-L &lt; u \leq t,\ \Delta N_i(u)&gt;0\},
+\]</span></p>
+<p>quando existe uma ocorrência no intervalo retrospectivo.</p>
+<p>A condição fundamental de validade temporal é que nenhuma feature utilize informação posterior a <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[
+\mathbf{X}_i(t) \in \mathcal{F}_t,
+\]</span></p>
+<p>em que <span class="math inline">\(\mathcal{F}_t\)</span> representa a informação disponível até o landmark.</p>
+</section>
+<section id="prediction-horizon" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="prediction-horizon"><span class="header-section-number">3.3</span> Prediction Horizon</h2>
+<p>Seja <span class="math inline">\(H \geq 1\)</span> o <strong>Prediction Horizon</strong>, expresso em meses.</p>
+<p>Para uma predição cumulativa, isto é, ocorrência em até <span class="math inline">\(H\)</span> meses, define-se</p>
+<p><span id="eq-target-cumulative"><span class="math display">\[
+Y_i(t;H)
+=
+I\left[N_i(t+H)-N_i(t)\geq 1\right].
+\tag{1}\]</span></span></p>
+<p>No caso de um único evento,</p>
+<p><span class="math display">\[
+Y_i(t;H)
+=
+I(t&lt;T_i\leq t+H).
+\]</span></p>
+<p>Essa definição é distinta de um target pontual, no qual se deseja prever ocorrência especificamente no período <span class="math inline">\(t+H\)</span>:</p>
+<p><span class="math display">\[
+Y_i^{\text{point}}(t;H)
+=
+I\left[\Delta N_i(t+H)\geq 1\right].
+\]</span></p>
+<p>Assim, a expressão “evento em até três meses” corresponde a um <strong>cumulative prediction horizon</strong>, enquanto “evento no terceiro mês” corresponde a um <strong>point prediction horizon</strong>.</p>
+</section>
+</section>
+<section id="sec-single" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Estratégia I: Single Landmark</h1>
+<section id="definição-formal" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="definição-formal"><span class="header-section-number">4.1</span> Definição formal</h2>
+<p>No desenho <strong>Single Landmark</strong>, escolhe-se um único tempo de referência <span class="math inline">\(t_L\)</span>. A amostra é formada pelos indivíduos elegíveis nesse instante e o target é determinado pela ocorrência do evento no horizonte futuro <span class="math inline">\(H\)</span>.</p>
+<p>O dataset é</p>
+<p><span class="math display">\[
+\mathcal{D}_{SL}(t_L,H)
+=
+\left\{
+\left(\mathbf{X}_i(t_L),Y_i(t_L;H)\right): E_i(t_L)=1
+\right\}.
+\]</span></p>
+<p>O estimando preditivo é</p>
+<p><span id="eq-single-estimand"><span class="math display">\[
+p_i(t_L,H)
+=
+P\left(Y_i(t_L;H)=1\mid \mathbf{X}_i(t_L),E_i(t_L)=1\right).
+\tag{2}\]</span></span></p>
+<p>Essa estrutura corresponde ao princípio central do landmarking: a predição é condicionada à informação disponível em um instante previamente estabelecido<span class="citation" data-cites="vanHouwelingen2007 vanHouwelingenPutter2012"><sup><a href="#ref-vanHouwelingen2007" role="doc-biblioref">1</a>, pp.&nbsp;70-85,<a href="#ref-vanHouwelingenPutter2012" role="doc-biblioref">2</a>, pp.&nbsp;124-132</sup></span>.</p>
+</section>
+<section id="representação-temporal" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="representação-temporal"><span class="header-section-number">4.2</span> Representação temporal</h2>
+<pre class="text"><code>PASSADO / FEATURES                FUTURO / TARGET
+
+... Mai  Jun  Jul  Ago | Set  Out  Nov
+                    ^    |&lt;---- H ----&gt;|
+                    |
+              LANDMARK tL
+
+X_i(tL)                  Y_i(tL; H)</code></pre>
+<p>Em forma abstrata:</p>
+<pre class="text"><code>------------------------|------------------------------&gt; tempo
+                        tL
+                        |--------- H ---------|
+                              EVENTO?</code></pre>
+<p>O fluxo lógico é</p>
+<pre class="text"><code>tempo de referencia fixo -&gt; construir features -&gt; procurar evento no futuro</code></pre>
+</section>
+<section id="propriedades-estatísticas" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="propriedades-estatísticas"><span class="header-section-number">4.3</span> Propriedades estatísticas</h2>
+<p>Quando todos os indivíduos elegíveis são incluídos, a prevalência observada do target no landmark reproduz a incidência empírica daquele horizonte, sujeita às regras de elegibilidade e censura. Esse desenho é diretamente alinhado à aplicação operacional quando o modelo será utilizado em uma única data de referência.</p>
+<p>Para eventos raros, contudo, a quantidade absoluta de positivos pode ser pequena. A dificuldade não decorre apenas da proporção de classes, mas também da limitada informação estatística associada ao número efetivo de eventos. Problemas de eventos raros são reconhecidos como um cenário no qual métodos usuais podem apresentar elevada variância ou probabilidades mal estimadas, especialmente quando o número de eventos é reduzido<span class="citation" data-cites="kingZeng2001"><sup><a href="#ref-kingZeng2001" role="doc-biblioref">9</a>, pp.&nbsp;137-163</sup></span>.</p>
+</section>
+</section>
+<section id="sec-multiple" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Estratégia II: Multiple Landmarks</h1>
+<section id="definição-formal-1" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="definição-formal-1"><span class="header-section-number">5.1</span> Definição formal</h2>
+<p>No desenho <strong>Multiple Landmarks</strong>, utiliza-se uma sequência de tempos de referência</p>
+<p><span class="math display">\[
+\mathcal{L}=\{t_1,t_2,\ldots,t_K\},
+\]</span></p>
+<p>em que <span class="math inline">\(K\)</span> é o <strong>Number of Landmarks</strong>.</p>
+<p>Define-se ainda o <strong>Landmark Stride</strong> <span class="math inline">\(S\)</span>, correspondente à distância temporal entre landmarks consecutivos:</p>
+<p><span class="math display">\[
+t_{k+1}-t_k=S.
+\]</span></p>
+<p>Para cada <span class="math inline">\(t_k\)</span>, constrói-se</p>
+<p><span class="math display">\[
+\mathcal{D}_k
+=
+\left\{
+\left(\mathbf{X}_i(t_k),Y_i(t_k;H),t_k\right): E_i(t_k)=1
+\right\}.
+\]</span></p>
+<p>A amostra empilhada é</p>
+<p><span id="eq-stacked"><span class="math display">\[
+\mathcal{D}_{ML}
+=
+\bigcup_{k=1}^{K}\mathcal{D}_k.
+\tag{3}\]</span></span></p>
+<p>A literatura de landmarking denomina esse tipo de construção como <em>stacked landmark dataset</em> ou <em>landmark super dataset</em> quando os datasets de diferentes landmarks são verticalmente combinados<span class="citation" data-cites="tanner2021"><sup><a href="#ref-tanner2021" role="doc-biblioref">3</a>, pp.&nbsp;3-30</sup></span>. Modelos que compartilham parâmetros entre landmarks são frequentemente denominados <em>landmark supermodels</em><span class="citation" data-cites="vanHouwelingenPutter2012"><sup><a href="#ref-vanHouwelingenPutter2012" role="doc-biblioref">2</a>, pp.&nbsp;105-116</sup></span>.</p>
+</section>
+<section id="janelas-não-sobrepostas" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="janelas-não-sobrepostas"><span class="header-section-number">5.2</span> Janelas não sobrepostas</h2>
+<p>Quando</p>
+<p><span class="math display">\[
+S=H,
+\]</span></p>
+<p>as janelas consecutivas do target são adjacentes e não se sobrepõem.</p>
+<p>Para <span class="math inline">\(H=3\)</span> e <span class="math inline">\(K=4\)</span>:</p>
+<pre class="text"><code>LANDMARK                 PREDICTION WINDOW
+
+2025-08   | 2025-09  2025-10  2025-11
+    ^     |&lt;--------- H = 3 ----------&gt;|
+    L1
+
+2025-11   | 2025-12  2026-01  2026-02
+    ^     |&lt;--------- H = 3 ----------&gt;|
+    L2
+
+2026-02   | 2026-03  2026-04  2026-05
+    ^     |&lt;--------- H = 3 ----------&gt;|
+    L3
+
+2026-05   | 2026-06  2026-07  2026-08
+    ^     |&lt;--------- H = 3 ----------&gt;|
+    L4</code></pre>
+<p>Para aplicação em setembro de 2026, tendo agosto de 2026 como último mês fechado:</p>
+<pre class="text"><code>TREINAMENTO
+
+2025-08 -&gt; evento em 2025-09:2025-11
+2025-11 -&gt; evento em 2025-12:2026-02
+2026-02 -&gt; evento em 2026-03:2026-05
+2026-05 -&gt; evento em 2026-06:2026-08
+
+APLICACAO
+
+2026-08 -&gt; prever evento em 2026-09:2026-11</code></pre>
+<p>Se <span class="math inline">\(S&lt;H\)</span>, as janelas de target se sobrepõem e um mesmo evento pode rotular positivamente mais de um landmark. Se <span class="math inline">\(S&gt;H\)</span>, surgem intervalos históricos que não contribuem para nenhum target.</p>
+</section>
+<section id="proposição-1-cobertura-temporal-com-stride-igual-ao-horizonte" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="proposição-1-cobertura-temporal-com-stride-igual-ao-horizonte"><span class="header-section-number">5.3</span> Proposição 1: cobertura temporal com stride igual ao horizonte</h2>
+<p>Se os landmarks são igualmente espaçados, <span class="math inline">\(S=H\)</span>, e existem <span class="math inline">\(K\)</span> landmarks, então as janelas de target cobrem <span class="math inline">\(KH\)</span> períodos consecutivos sem sobreposição interna entre janelas adjacentes.</p>
+<p>De fato, para cada <span class="math inline">\(k\)</span>, a janela é</p>
+<p><span class="math display">\[
+W_k=(t_k,t_k+H],
+\]</span></p>
+<p>com <span class="math inline">\(t_{k+1}=t_k+H\)</span>. Logo,</p>
+<p><span class="math display">\[
+W_k\cap W_{k+1}=\varnothing
+\]</span></p>
+<p>em tempo discreto, considerando que o limite final de <span class="math inline">\(W_k\)</span> coincide com o landmark seguinte e não pertence à janela posterior.</p>
+<p>A não sobreposição das janelas <strong>não implica independência estatística</strong>. O mesmo indivíduo pode contribuir em múltiplos landmarks, produzindo dependência intrassujeito. Essa característica é central em datasets landmark empilhados e deve ser preservada na validação e, quando houver inferência paramétrica, na estimação da incerteza<span class="citation" data-cites="tanner2021"><sup><a href="#ref-tanner2021" role="doc-biblioref">3</a>, pp.&nbsp;3-30</sup></span>.</p>
+</section>
+<section id="estimando-e-interpretação" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="estimando-e-interpretação"><span class="header-section-number">5.4</span> Estimando e interpretação</h2>
+<p>Se o algoritmo inclui explicitamente o landmark ou se assume estabilidade temporal, o objetivo pode ser escrito como</p>
+<p><span class="math display">\[
+p_i(t_k,H)
+=
+P\left(Y_i(t_k;H)=1\mid \mathbf{X}_i(t_k),t_k,E_i(t_k)=1\right).
+\]</span></p>
+<p>Quando <span class="math inline">\(t_k\)</span> não é incluído, o modelo ajustado sobre o dataset empilhado aproxima uma relação média sobre a distribuição histórica dos landmarks:</p>
+<p><span class="math display">\[
+P(Y=1\mid \mathbf{X})
+=
+\sum_{k=1}^{K}
+P(Y=1\mid \mathbf{X},t_k)P(t_k\mid \mathbf{X}).
+\]</span></p>
+<p>Portanto, Multiple Landmarks aumenta a quantidade de eventos observados, mas também cria uma mistura temporal. A validade da extrapolação para o landmark corrente depende da estabilidade do mecanismo gerador de dados ou de estratégias explícitas para acomodar deriva temporal.</p>
+</section>
+</section>
+<section id="sec-event" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Estratégia III: Event-Based Sampling</h1>
+<section id="definição-operacional" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="definição-operacional"><span class="header-section-number">6.1</span> Definição operacional</h2>
+<p>No <strong>Event-Based Sampling</strong>, o processo de construção da amostra é iniciado pela localização de eventos históricos. Seja <span class="math inline">\(\tau_{ij}\)</span> o tempo da <span class="math inline">\(j\)</span>-ésima ocorrência do evento para o indivíduo <span class="math inline">\(i\)</span>. Define-se um deslocamento retrospectivo <span class="math inline">\(\delta\)</span> e um tempo de ancoragem</p>
+<p><span class="math display">\[
+a_{ij}=\tau_{ij}-\delta.
+\]</span></p>
+<p>A observação positiva é então construída a partir de</p>
+<p><span class="math display">\[
+\left(\mathbf{X}_i(a_{ij}),Y_{ij}=1\right).
+\]</span></p>
+<p>O sentido temporal é inverso ao landmarking.</p>
+<pre class="text"><code>LANDMARKING
+
+tempo fixo -&gt; features -&gt; procura evento no horizonte futuro
+
+EVENT-BASED SAMPLING
+
+procura evento -&gt; define retrospectivamente o tempo das features</code></pre>
+<p>Representação:</p>
+<pre class="text"><code>PASSADO                                      EVENTO
+
+... Abr  Mai  Jun  Jul | Ago
+                   ^      ^
+                   |      |
+               FEATURES  tau_ij
+                   |
+              a_ij=tau_ij-delta</code></pre>
+</section>
+<section id="proposição-2-condicionamento-da-posição-do-evento" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="proposição-2-condicionamento-da-posição-do-evento"><span class="header-section-number">6.2</span> Proposição 2: condicionamento da posição do evento</h2>
+<p>Se todas as observações positivas forem construídas com <span class="math inline">\(\delta=1\)</span>, então, por construção,</p>
+<p><span class="math display">\[
+P\left(T_i=a_{ij}+1\mid Y_{ij}=1,\text{selecionado}\right)=1.
+\]</span></p>
+<p>Consequentemente, esse desenho não é equivalente ao problema</p>
+<p><span class="math display">\[
+P\left(t&lt;T_i\leq t+H\mid \mathbf{X}_i(t)\right)
+\]</span></p>
+<p>para <span class="math inline">\(H&gt;1\)</span>, pois a distribuição da posição do evento dentro do horizonte é degenerada em <span class="math inline">\(t+1\)</span>. Em particular, utilizar features do mês imediatamente anterior ao evento para todos os casos positivos treina o modelo em um cenário no qual o evento positivo ocorre necessariamente no próximo mês, ainda que a aplicação operacional tenha como objetivo a ocorrência em qualquer um dos próximos <span class="math inline">\(H\)</span> meses.</p>
+<p>Uma alternativa seria definir <span class="math inline">\(\delta \in \{1,\ldots,H\}\)</span> segundo uma regra preestabelecida. Entretanto, a escolha de <span class="math inline">\(\delta\)</span> passa a integrar o mecanismo de amostragem e deve ser considerada na interpretação probabilística.</p>
+</section>
+<section id="relação-com-risk-set-e-incidence-density-sampling" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="relação-com-risk-set-e-incidence-density-sampling"><span class="header-section-number">6.3</span> Relação com risk-set e incidence-density sampling</h2>
+<p>O Event-Based Sampling, conforme definido neste artigo, é uma categoria ampla. Quando, para cada evento ocorrido em <span class="math inline">\(\tau\)</span>, controles são selecionados aleatoriamente entre indivíduos pertencentes ao conjunto de risco <span class="math inline">\(\mathcal{R}(\tau)\)</span>, obtém-se uma estrutura correspondente a <em>risk-set sampling</em> ou <em>incidence-density sampling</em> em desenhos caso-controle aninhados<span class="citation" data-cites="prenticeBreslow1978 greenlandThomas1982"><sup><a href="#ref-prenticeBreslow1978" role="doc-biblioref">4</a>, pp.&nbsp;153-158,<a href="#ref-greenlandThomas1982" role="doc-biblioref">5</a>, pp.&nbsp;547-553</sup></span>.</p>
+<p>Pode-se representar o conjunto de risco como</p>
+<p><span class="math display">\[
+\mathcal{R}(\tau)
+=
+\{i:E_i(\tau)=1\}.
+\]</span></p>
+<p>Para um caso <span class="math inline">\(c\)</span> ocorrido em <span class="math inline">\(\tau_c\)</span>, seleciona-se um subconjunto de controles</p>
+<p><span class="math display">\[
+\mathcal{C}(\tau_c)\subset \mathcal{R}(\tau_c)\setminus\{c\}.
+\]</span></p>
+<p>Essa construção possui propriedades inferenciais específicas e não deve ser confundida com uma seleção genérica de negativos históricos. Da mesma forma, <em>case-base sampling</em> possui uma formulação própria baseada na amostragem de person-moments e modelagem da função de risco<span class="citation" data-cites="hanleyMiettinen2009 bhatnagar2022"><sup><a href="#ref-hanleyMiettinen2009" role="doc-biblioref">6</a>, pp.&nbsp;1-25,<a href="#ref-bhatnagar2022" role="doc-biblioref">7</a>, pp.&nbsp;59-79</sup></span>.</p>
+</section>
+<section id="proposição-3-alteração-das-probabilidades-pela-seleção-de-classes" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="proposição-3-alteração-das-probabilidades-pela-seleção-de-classes"><span class="header-section-number">6.4</span> Proposição 3: alteração das probabilidades pela seleção de classes</h2>
+<p>Considere um indicador <span class="math inline">\(S_i\)</span> que representa inclusão na amostra Event-Based e probabilidades de seleção</p>
+<p><span class="math display">\[
+\pi_1=P(S_i=1\mid Y_i=1),
+\]</span></p>
+<p><span class="math display">\[
+\pi_0=P(S_i=1\mid Y_i=0).
+\]</span></p>
+<p>Se a seleção depender da classe, mas for condicionalmente independente de <span class="math inline">\(\mathbf{X}\)</span> dado <span class="math inline">\(Y\)</span>, então as odds na amostra satisfazem</p>
+<p><span id="eq-selection-odds"><span class="math display">\[
+\frac{P_s(Y=1\mid \mathbf{X})}{P_s(Y=0\mid \mathbf{X})}
+=
+\frac{\pi_1}{\pi_0}
+\frac{P(Y=1\mid \mathbf{X})}{P(Y=0\mid \mathbf{X})}.
+\tag{4}\]</span></span></p>
+<p>Logo, enriquecimento deliberado de eventos altera o intercepto probabilístico. Para um modelo logístico corretamente especificado,</p>
+<p><span class="math display">\[
+\operatorname{logit}P(Y=1\mid \mathbf{X})
+=
+\operatorname{logit}P_s(Y=1\mid \mathbf{X})
+-
+\log\left(\frac{\pi_1}{\pi_0}\right).
+\]</span></p>
+<p>Essa propriedade explica por que estratégias de amostragem que aumentam artificialmente a prevalência da classe positiva podem preservar parte da informação discriminativa e, simultaneamente, produzir probabilidades não calibradas para a população original. A literatura de eventos raros enfatiza a necessidade de distinguir eficiência amostral de estimação da probabilidade populacional<span class="citation" data-cites="kingZeng2001"><sup><a href="#ref-kingZeng2001" role="doc-biblioref">9</a>, pp.&nbsp;137-163</sup></span>.</p>
+</section>
+</section>
+<section id="sec-comparacao" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Comparação formal das estratégias</h1>
+<div id="tbl-comparacao" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-comparacao-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;1: Comparação conceitual das três estratégias de amostragem temporal.
+</figcaption>
+<div aria-describedby="tbl-comparacao-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Propriedade</th>
+<th>Single Landmark</th>
+<th>Multiple Landmarks</th>
+<th>Event-Based Sampling</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Âncora temporal</td>
+<td>Um tempo predefinido <span class="math inline">\(t_L\)</span></td>
+<td>Vários tempos predefinidos <span class="math inline">\(t_k\)</span></td>
+<td>Tempo do evento <span class="math inline">\(\tau\)</span></td>
+</tr>
+<tr class="even">
+<td>Direção lógica</td>
+<td><span class="math inline">\(t \rightarrow\)</span> evento futuro</td>
+<td><span class="math inline">\(t_k \rightarrow\)</span> evento futuro</td>
+<td>evento <span class="math inline">\(\rightarrow\)</span> tempo retrospectivo</td>
+</tr>
+<tr class="odd">
+<td>Definição típica do target</td>
+<td><span class="math inline">\(I[N(t+H)-N(t)\geq1]\)</span></td>
+<td>Mesma definição em cada <span class="math inline">\(t_k\)</span></td>
+<td>Positivos determinados pela ocorrência observada</td>
+</tr>
+<tr class="even">
+<td>Quantidade de snapshots</td>
+<td>1</td>
+<td><span class="math inline">\(K\)</span></td>
+<td>Determinada pelo número de eventos e regra de amostragem</td>
+</tr>
+<tr class="odd">
+<td>Prevalência natural preservada</td>
+<td>Sim, se população elegível completa</td>
+<td>Em cada landmark, sim; no stack ocorre mistura temporal</td>
+<td>Não necessariamente</td>
+</tr>
+<tr class="even">
+<td>Repetição do indivíduo</td>
+<td>Não dentro do landmark</td>
+<td>Frequente</td>
+<td>Possível, especialmente com eventos recorrentes</td>
+</tr>
+<tr class="odd">
+<td>Dependência temporal</td>
+<td>Uma janela</td>
+<td>Entre snapshots do mesmo indivíduo e entre períodos históricos</td>
+<td>Dependente do desenho de casos e controles</td>
+</tr>
+<tr class="even">
+<td>Adequação direta à aplicação em <span class="math inline">\(t\)</span></td>
+<td>Alta</td>
+<td>Alta se a distribuição histórica representar o tempo atual</td>
+<td>Depende da regra de ancoragem e correção de seleção</td>
+</tr>
+<tr class="odd">
+<td>Principal vantagem para evento raro</td>
+<td>Simplicidade e prevalência real</td>
+<td>Mais eventos reais sem sintetização</td>
+<td>Forte enriquecimento da classe positiva</td>
+</tr>
+<tr class="even">
+<td>Principal risco</td>
+<td>Poucos positivos</td>
+<td>Drift temporal e pseudorreplicação</td>
+<td>Viés de seleção e desalinhamento do horizonte</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A distinção fundamental pode ser resumida por</p>
+<p><span class="math display">\[
+\text{Single Landmark: } t_L \rightarrow T,
+\]</span></p>
+<p><span class="math display">\[
+\text{Multiple Landmarks: } \{t_1,\ldots,t_K\} \rightarrow T,
+\]</span></p>
+<p><span class="math display">\[
+\text{Event-Based Sampling: } T \rightarrow t.
+\]</span></p>
+</section>
+<section id="sec-raros" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Implicações para eventos raros</h1>
+<section id="informação-adicional-sem-geração-sintética" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="informação-adicional-sem-geração-sintética"><span class="header-section-number">8.1</span> Informação adicional sem geração sintética</h2>
+<p>Em Multiple Landmarks, o aumento da quantidade de positivos decorre da utilização de eventos reais observados em períodos históricos adicionais. Se a probabilidade de evento em cada horizonte for aproximadamente <span class="math inline">\(p\)</span>, o número esperado de positivos no dataset empilhado é</p>
+<p><span class="math display">\[
+E[N_+]
+=
+\sum_{k=1}^{K} n_k p_k,
+\]</span></p>
+<p>em que <span class="math inline">\(n_k\)</span> é o número de indivíduos elegíveis e <span class="math inline">\(p_k\)</span> a incidência do evento no landmark <span class="math inline">\(k\)</span>.</p>
+<p>Se <span class="math inline">\(n_k\approx n\)</span> e <span class="math inline">\(p_k\approx p\)</span>, então</p>
+<p><span class="math display">\[
+E[N_+]\approx Knp.
+\]</span></p>
+<p>Essa relação não implica que a informação estatística cresça exatamente por um fator <span class="math inline">\(K\)</span>, porque indivíduos repetidos geram correlação e porque a distribuição temporal pode variar. Ainda assim, a estratégia pode elevar substancialmente o número bruto de eventos disponíveis sem criar observações sintéticas.</p>
+</section>
+<section id="rareza-e-avaliação-discriminativa" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="rareza-e-avaliação-discriminativa"><span class="header-section-number">8.2</span> Rareza e avaliação discriminativa</h2>
+<p>Em problemas altamente desbalanceados, a avaliação deve evitar dependência exclusiva da área sob a curva ROC. Curvas precision-recall são especialmente informativas quando a classe positiva é rara, porque precision incorpora diretamente a proporção de verdadeiros positivos entre as predições positivas<span class="citation" data-cites="davisGoadrich2006"><sup><a href="#ref-davisGoadrich2006" role="doc-biblioref">10</a>, pp.&nbsp;233-240</sup></span>.</p>
+<p>A métrica central recomendada para comparação discriminativa é a área sob a curva precision-recall, PR-AUC. Entretanto, a comparação metodológica não deve ser restrita à discriminação. Modelos utilizados para produzir probabilidades individuais exigem avaliação de calibração e erro probabilístico.</p>
+</section>
+<section id="mistura-temporal-em-multiple-landmarks" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="mistura-temporal-em-multiple-landmarks"><span class="header-section-number">8.3</span> Mistura temporal em Multiple Landmarks</h2>
+<p>No dataset empilhado, a prevalência global é</p>
+<p><span class="math display">\[
+\bar{p}
+=
+\frac{\sum_{k=1}^{K}n_kp_k}{\sum_{k=1}^{K}n_k}.
+\]</span></p>
+<p>Essa quantidade representa uma média ponderada das prevalências históricas e pode diferir da prevalência do landmark de aplicação. Portanto, mesmo sem subamostragem de negativos, mudanças temporais em <span class="math inline">\(p_k\)</span> podem exigir recalibração no período atual.</p>
+<p>Uma extensão possível consiste em atribuir pesos temporais <span class="math inline">\(w_k\)</span>:</p>
+<p><span class="math display">\[
+\mathcal{L}(f)
+=
+\sum_{k=1}^{K}w_k
+\sum_{i:E_i(t_k)=1}
+\ell\left(Y_i(t_k;H),f(\mathbf{X}_i(t_k),t_k)\right),
+\]</span></p>
+<p>com maior peso para landmarks recentes. Essa extensão deve ser tratada como decisão adicional e validada empiricamente.</p>
+</section>
+</section>
+<section id="sec-validacao" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Protocolo de validação metodológica</h1>
+<p>Um Methodological Paper deve demonstrar não apenas a formulação dos métodos, mas também como suas propriedades serão avaliadas de maneira reproduzível. Para os três desenhos, recomenda-se um protocolo comum de comparação.</p>
+<section id="conjunto-de-teste-fixo-e-representativo" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="conjunto-de-teste-fixo-e-representativo"><span class="header-section-number">9.1</span> Conjunto de teste fixo e representativo</h2>
+<p>As estratégias devem ser comparadas sobre <strong>o mesmo conjunto de teste</strong>, construído em um landmark posterior ao período utilizado para treinamento. O teste deve manter a prevalência natural e não deve ser submetido a oversampling, undersampling ou seleção orientada ao evento.</p>
+<p>Se <span class="math inline">\(t_{test}\)</span> for o landmark de teste,</p>
+<p><span class="math display">\[
+\mathcal{D}_{test}
+=
+\left\{
+\left(\mathbf{X}_i(t_{test}),Y_i(t_{test};H)\right):E_i(t_{test})=1
+\right\}.
+\]</span></p>
+<p>Essa escolha aproxima a avaliação do cenário operacional real.</p>
+</section>
+<section id="separação-temporal" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="separação-temporal"><span class="header-section-number">9.2</span> Separação temporal</h2>
+<p>Dados longitudinais possuem dependência temporal, e validação aleatória ingênua pode subestimar o erro de generalização quando observações temporalmente relacionadas aparecem em treino e validação<span class="citation" data-cites="roberts2017"><sup><a href="#ref-roberts2017" role="doc-biblioref">11</a>, pp.&nbsp;913-929</sup></span>. Recomenda-se uma avaliação do tipo <em>rolling-origin</em> ou uma separação temporal estrita.</p>
+<pre class="text"><code>TEMPO ------------------------------------------------------------&gt;
+
+[ landmarks de treinamento ] [ validacao ] [ teste final ]
+
+       passado                  futuro       futuro mais recente</code></pre>
+</section>
+<section id="agrupamento-por-indivíduo" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="agrupamento-por-indivíduo"><span class="header-section-number">9.3</span> Agrupamento por indivíduo</h2>
+<p>Quando Multiple Landmarks é utilizado, o mesmo indivíduo pode aparecer em diversos snapshots. Se validação cruzada for empregada dentro do período de treinamento, todos os registros do mesmo indivíduo devem permanecer no mesmo fold:</p>
+<p><span class="math display">\[
+\operatorname{fold}(i,t_1)
+=
+\operatorname{fold}(i,t_2)
+=
+\cdots
+=
+\operatorname{fold}(i,t_K).
+\]</span></p>
+<p>Essa regra impede que o modelo seja treinado com o histórico de um indivíduo e validado sobre outro snapshot do mesmo indivíduo.</p>
+</section>
+<section id="métricas" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="métricas"><span class="header-section-number">9.4</span> Métricas</h2>
+<p>Recomenda-se reportar, no mínimo:</p>
+<ol type="1">
+<li>PR-AUC, como medida principal de discriminação para evento raro<span class="citation" data-cites="davisGoadrich2006"><sup><a href="#ref-davisGoadrich2006" role="doc-biblioref">10</a>, pp.&nbsp;233-240</sup></span>.</li>
+<li>ROC-AUC, como medida complementar.</li>
+<li>Brier Score, para erro probabilístico.</li>
+<li>Log Loss, para penalização de probabilidades incorretas com alta confiança.</li>
+<li>Calibration-in-the-large, ou intercepto de calibração.</li>
+<li>Slope de calibração.</li>
+<li>Curva de calibração por decis ou quantis de risco.</li>
+<li>Sensibilidade em níveis operacionais predefinidos de precision, PPV ou capacidade de abordagem.</li>
+</ol>
+<p>Intervalos de confiança devem considerar a unidade de dependência. Em datasets com múltiplos registros por indivíduo, o bootstrap deve ser realizado preferencialmente no nível do indivíduo, não no nível da linha.</p>
+</section>
+</section>
+<section id="sec-plano" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Plano de avaliação empírica</h1>
+<p>A comparação entre estratégias deve separar o efeito da <strong>amostragem temporal</strong> do efeito do <strong>algoritmo de machine learning</strong>. Recomenda-se fixar o algoritmo, as features, os hiperparâmetros ou o procedimento de tuning e variar somente o desenho de amostra.</p>
+<section id="cenários-mínimos" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="cenários-mínimos"><span class="header-section-number">10.1</span> Cenários mínimos</h2>
+<p><strong>Cenário A: Single Landmark</strong></p>
+<p><span class="math display">\[
+\mathcal{D}_{train}=\mathcal{D}_{SL}(t_0,H).
+\]</span></p>
+<p><strong>Cenário B: Multiple Landmarks com janelas não sobrepostas</strong></p>
+<p><span class="math display">\[
+S=H,
+\]</span></p>
+<p><span class="math display">\[
+\mathcal{D}_{train}=\bigcup_{k=1}^{K}\mathcal{D}_k.
+\]</span></p>
+<p><strong>Cenário C: Event-Based Sampling</strong></p>
+<p>Todos os eventos do período histórico elegível são identificados, as features são ancoradas por uma regra <span class="math inline">\(a=\tau-\delta\)</span> e os negativos são selecionados por um protocolo explicitamente documentado.</p>
+</section>
+<section id="quantidades-a-reportar" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="quantidades-a-reportar"><span class="header-section-number">10.2</span> Quantidades a reportar</h2>
+<p>Para cada cenário devem ser reportados:</p>
+<ul>
+<li>número total de linhas;</li>
+<li>número de indivíduos únicos;</li>
+<li>número de positivos;</li>
+<li>prevalência amostral;</li>
+<li>número médio de registros por indivíduo;</li>
+<li>distribuição dos landmarks;</li>
+<li>distribuição da posição do evento dentro do horizonte;</li>
+<li>PR-AUC no teste de prevalência natural;</li>
+<li>calibração;</li>
+<li>estabilidade por landmark;</li>
+<li>custo computacional.</li>
+</ul>
+</section>
+<section id="hipóteses-metodológicas-testáveis" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="hipóteses-metodológicas-testáveis"><span class="header-section-number">10.3</span> Hipóteses metodológicas testáveis</h2>
+<p>A avaliação empírica pode testar as seguintes hipóteses:</p>
+<p><strong>H1.</strong> Multiple Landmarks aumenta o número de eventos reais disponíveis para estimação em relação a Single Landmark.</p>
+<p><strong>H2.</strong> O ganho de discriminação de Multiple Landmarks depende da estabilidade temporal de <span class="math inline">\(P(Y\mid\mathbf{X},t)\)</span>.</p>
+<p><strong>H3.</strong> Event-Based Sampling pode aumentar a capacidade discriminativa aparente durante o treinamento, mas requer correção ou recalibração quando a prevalência amostral difere da prevalência populacional.</p>
+<p><strong>H4.</strong> Ancoragem de todos os positivos imediatamente antes do evento altera a distribuição temporal condicional do target e pode degradar o desempenho para um cumulative prediction horizon com <span class="math inline">\(H&gt;1\)</span>.</p>
+</section>
+</section>
+<section id="sec-algoritmos" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Algoritmos de construção</h1>
+<section id="single-landmark" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="single-landmark"><span class="header-section-number">11.1</span> Single Landmark</h2>
+<pre class="text"><code>Entrada:
+  landmark tL
+  horizonte H
+  tabela de features por cliente e mes
+  tabela de eventos por cliente e data
+
+Para cada cliente elegivel em tL:
+  X &lt;- features disponiveis ate tL
+  Y &lt;- 1 se existir evento em (tL, tL + H]
+       0 caso contrario
+
+Saida:
+  uma linha por cliente elegivel</code></pre>
+</section>
+<section id="multiple-landmarks" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="multiple-landmarks"><span class="header-section-number">11.2</span> Multiple Landmarks</h2>
+<pre class="text"><code>Entrada:
+  landmark mais recente t0
+  horizonte H
+  numero de landmarks K
+  stride S
+
+Para k = 0,...,K-1:
+  tk &lt;- t0 - k*S
+
+  Para cada cliente elegivel em tk:
+    X &lt;- features disponiveis ate tk
+    Y &lt;- 1 se existir evento em (tk, tk + H]
+         0 caso contrario
+
+Empilhar todos os datasets de landmark
+Preservar cliente e landmark como identificadores</code></pre>
+<p>No desenho de janelas não sobrepostas:</p>
+<p><span class="math display">\[
+S=H.
+\]</span></p>
+</section>
+<section id="event-based-sampling" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="event-based-sampling"><span class="header-section-number">11.3</span> Event-Based Sampling</h2>
+<pre class="text"><code>Entrada:
+  periodo historico
+  deslocamento delta
+  regra de selecao de controles
+
+Localizar todas as ocorrencias elegiveis do evento
+
+Para cada evento em tau:
+  anchor &lt;- tau - delta
+  X_case &lt;- features disponiveis ate anchor
+
+  Selecionar controles conforme protocolo definido
+  Construir X_control no tempo de referencia correspondente
+
+Registrar probabilidades ou fracoes de amostragem quando aplicavel</code></pre>
+</section>
+</section>
+<section id="sec-escolha" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Critérios de escolha</h1>
+<p>A escolha entre estratégias deve ser determinada pelo estimando operacional e pelo mecanismo de geração dos dados.</p>
+<p><strong>Single Landmark</strong> é apropriado quando se deseja máxima correspondência entre treinamento e uma única fotografia operacional e o número de eventos é suficiente para ajuste e validação.</p>
+<p><strong>Multiple Landmarks</strong> é apropriado quando os snapshots históricos podem ser reconstruídos de forma consistente, as features são definidas independentemente do evento e se deseja ampliar o número de eventos reais observados mantendo a mesma definição prospectiva do target. Esse desenho é particularmente natural quando a infraestrutura de features já armazena valores por cliente, mês de referência e parâmetros de janela.</p>
+<p><strong>Event-Based Sampling</strong> é apropriado quando a amostragem orientada ao evento é parte deliberada do desenho e existe um protocolo estatístico para selecionar observações de comparação. Se probabilidades absolutas forem o produto final, o mecanismo de amostragem deve ser incorporado à estimação ou seguido de recalibração em uma amostra representativa.</p>
+</section>
+<section id="sec-vieses" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> Validade, vieses e ameaças metodológicas</h1>
+<section id="leakage-temporal" class="level2" data-number="13.1">
+<h2 data-number="13.1" class="anchored" data-anchor-id="leakage-temporal"><span class="header-section-number">13.1</span> Leakage temporal</h2>
+<p>Qualquer feature calculada com informação posterior ao landmark viola a ordem temporal da predição. Para todas as estratégias deve ser garantido</p>
+<p><span class="math display">\[
+\max\{u:Z_i(u)\text{ contribui para }\mathbf{X}_i(t)\}\leq t.
+\]</span></p>
+</section>
+<section id="dependência-por-repetição-do-indivíduo" class="level2" data-number="13.2">
+<h2 data-number="13.2" class="anchored" data-anchor-id="dependência-por-repetição-do-indivíduo"><span class="header-section-number">13.2</span> Dependência por repetição do indivíduo</h2>
+<p>Multiple Landmarks transforma a unidade observacional de indivíduo em <strong>indivíduo-tempo</strong>. O número de linhas deixa de representar o número de unidades estatisticamente independentes.</p>
+</section>
+<section id="drift-temporal" class="level2" data-number="13.3">
+<h2 data-number="13.3" class="anchored" data-anchor-id="drift-temporal"><span class="header-section-number">13.3</span> Drift temporal</h2>
+<p>A hipótese implícita de pooling temporal é enfraquecida quando</p>
+<p><span class="math display">\[
+P_t(Y\mid\mathbf{X})
+\]</span></p>
+<p>varia substancialmente entre landmarks. Deve-se avaliar desempenho e calibração separadamente por período antes de assumir estabilidade.</p>
+</section>
+<section id="censura-e-observabilidade-do-horizonte" class="level2" data-number="13.4">
+<h2 data-number="13.4" class="anchored" data-anchor-id="censura-e-observabilidade-do-horizonte"><span class="header-section-number">13.4</span> Censura e observabilidade do horizonte</h2>
+<p>Um landmark histórico só pode ser utilizado quando o horizonte completo do target é observável. Se <span class="math inline">\(t_{max}\)</span> for o último período fechado com eventos disponíveis, exige-se</p>
+<p><span class="math display">\[
+t_k+H\leq t_{max}.
+\]</span></p>
+<p>Para agosto de 2026 como último mês fechado e <span class="math inline">\(H=3\)</span>, maio de 2026 é o landmark histórico mais recente cujo target de junho a agosto pode ser completamente observado.</p>
+</section>
+<section id="eventos-recorrentes" class="level2" data-number="13.5">
+<h2 data-number="13.5" class="anchored" data-anchor-id="eventos-recorrentes"><span class="header-section-number">13.5</span> Eventos recorrentes</h2>
+<p>Quando o evento pode ocorrer mais de uma vez, deve-se explicitar se uma ocorrência anterior remove o indivíduo do conjunto elegível, inicia um período refratário ou permite novo target positivo em landmarks posteriores. Essa decisão altera <span class="math inline">\(E_i(t)\)</span> e deve ser tratada como parte da definição do problema, não como detalhe de implementação.</p>
+</section>
+</section>
+<section id="sec-reprodutibilidade" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> Reprodutibilidade e especificação mínima</h1>
+<p>Para que um estudo seja reproduzível, a especificação metodológica deve registrar pelo menos os seguintes elementos:</p>
+<div id="tbl-especificacao" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-especificacao-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;2: Especificação temporal mínima para reprodutibilidade.
+</figcaption>
+<div aria-describedby="tbl-especificacao-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Componente</th>
+<th style="text-align: right;">Símbolo</th>
+<th style="text-align: right;">Exemplo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data de referência</td>
+<td style="text-align: right;"><span class="math inline">\(t\)</span></td>
+<td style="text-align: right;">2026-08</td>
+</tr>
+<tr class="even">
+<td>Summary Window</td>
+<td style="text-align: right;"><span class="math inline">\(A\)</span></td>
+<td style="text-align: right;">6 meses</td>
+</tr>
+<tr class="odd">
+<td>Lookback Window</td>
+<td style="text-align: right;"><span class="math inline">\(L\)</span></td>
+<td style="text-align: right;">36 meses</td>
+</tr>
+<tr class="even">
+<td>Prediction Horizon</td>
+<td style="text-align: right;"><span class="math inline">\(H\)</span></td>
+<td style="text-align: right;">3 meses</td>
+</tr>
+<tr class="odd">
+<td>Tipo de horizonte</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">cumulative</td>
+</tr>
+<tr class="even">
+<td>Sampling Strategy</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">multiple landmarks</td>
+</tr>
+<tr class="odd">
+<td>Number of Landmarks</td>
+<td style="text-align: right;"><span class="math inline">\(K\)</span></td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td>Landmark Stride</td>
+<td style="text-align: right;"><span class="math inline">\(S\)</span></td>
+<td style="text-align: right;">3 meses</td>
+</tr>
+<tr class="odd">
+<td>Regra de elegibilidade</td>
+<td style="text-align: right;"><span class="math inline">\(E_i(t)\)</span></td>
+<td style="text-align: right;">definida pelo protocolo</td>
+</tr>
+<tr class="even">
+<td>Definição do evento</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">ao menos uma ocorrência</td>
+</tr>
+<tr class="odd">
+<td>Regra de repetição do cliente</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">permitida entre landmarks</td>
+</tr>
+<tr class="even">
+<td>Regra de seleção de controles</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">aplicável ao Event-Based</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Em aplicações profissionais, recomenda-se que esses parâmetros sejam persistidos junto ao artefato do modelo, pois constituem parte da definição estatística do treinamento e não apenas parâmetros de execução.</p>
+</section>
+<section id="sec-discussao" class="level1" data-number="15">
+<h1 data-number="15"><span class="header-section-number">15</span> Discussão</h1>
+<p>Os três desenhos diferem fundamentalmente no mecanismo que determina o tempo de referência. Single Landmark e Multiple Landmarks são prospectivos em sua construção lógica: primeiro estabelece-se o tempo <span class="math inline">\(t\)</span>, congelam-se as informações disponíveis e, posteriormente, verifica-se a ocorrência do evento. Event-Based Sampling é retrospectivo em sua construção amostral: primeiro identifica-se a ocorrência e, a partir dela, determina-se o tempo no qual as covariáveis serão observadas.</p>
+<p>A distinção é relevante porque a seleção da amostra pode alterar o estimando. Em Multiple Landmarks, quando todos os indivíduos elegíveis são utilizados em cada tempo, a definição do target permanece inalterada e o ganho de informação provém da ampliação do eixo temporal. Em Event-Based Sampling, a seleção de positivos e negativos pode alterar as odds amostrais, exigindo maior atenção à calibração e à interpretação de probabilidades.</p>
+<p>No contexto de eventos raros, Multiple Landmarks ocupa uma posição metodologicamente atraente quando snapshots históricos consistentes estão disponíveis. O método aumenta o número de eventos observados sem modificar diretamente a classe e sem exigir que o próprio evento determine a data das features. A literatura de landmarking demonstra que o empilhamento de datasets em diferentes tempos de referência é uma construção estatística estabelecida para predição dinâmica<span class="citation" data-cites="tanner2021 vanHouwelingenPutter2012"><sup><a href="#ref-tanner2021" role="doc-biblioref">3</a>, pp.&nbsp;3-30,<a href="#ref-vanHouwelingenPutter2012" role="doc-biblioref">2</a>, pp.&nbsp;105-116</sup></span>.</p>
+<p>Isso não implica superioridade universal. Se houver forte drift temporal, períodos históricos antigos podem reduzir a relevância para o presente. Se a ocorrência do evento modifica substancialmente a trajetória posterior das features, regras de elegibilidade e recorrência precisam ser explicitadas. Se a coleta ou processamento de covariáveis for oneroso, desenhos orientados ao evento e amostragem eficiente de controles podem ser preferíveis, desde que acompanhados da teoria inferencial apropriada<span class="citation" data-cites="prenticeBreslow1978 hanleyMiettinen2009"><sup><a href="#ref-prenticeBreslow1978" role="doc-biblioref">4</a>, pp.&nbsp;153-158,<a href="#ref-hanleyMiettinen2009" role="doc-biblioref">6</a>, pp.&nbsp;1-25</sup></span>.</p>
+</section>
+<section id="sec-limitacoes" class="level1" data-number="16">
+<h1 data-number="16"><span class="header-section-number">16</span> Limitações</h1>
+<p>A taxonomia proposta abstrai particularidades do algoritmo preditivo. Modelos de sobrevivência, regressão logística, gradient boosting, redes neurais e outros métodos podem responder de maneira distinta à repetição de indivíduos e à mudança de prevalência.</p>
+<p>O termo Event-Based Sampling é utilizado como categoria operacional e não substitui denominações formais de desenhos epidemiológicos específicos. Quando a implementação corresponder a <em>risk-set sampling</em>, <em>incidence-density sampling</em>, <em>nested case-control</em> ou <em>case-base sampling</em>, a nomenclatura específica deve ser utilizada.</p>
+<p>As expressões apresentadas assumem tempo discreto mensal para compatibilidade com o cenário motivador. A formulação pode ser estendida para tempo contínuo substituindo intervalos discretos por processos de contagem e funções de risco.</p>
+<p>Finalmente, o presente artigo formaliza o desenho metodológico e estabelece um protocolo de avaliação. A demonstração empírica de superioridade entre estratégias depende do processo gerador de dados e deve ser realizada em bases reais e, idealmente, em estudos de simulação controlados.</p>
+</section>
+<section id="sec-conclusao" class="level1" data-number="17">
+<h1 data-number="17"><span class="header-section-number">17</span> Conclusão</h1>
+<p>Single Landmark, Multiple Landmarks e Event-Based Sampling representam três mecanismos distintos de construção temporal de amostras preditivas. No primeiro, um único marco temporal antecede o horizonte do target. No segundo, o mesmo problema prospectivo é reconstruído em vários marcos históricos e os datasets são empilhados. No terceiro, a ocorrência do evento inicia o processo de amostragem e determina retrospectivamente o tempo das covariáveis.</p>
+<p>Para predição binária de eventos raros com features historicamente disponíveis por mês de referência, Multiple Landmarks permite ampliar a base com eventos reais sem alterar a definição prospectiva do target. Quando o landmark stride é igual ao prediction horizon, as janelas do target são não sobrepostas, embora a repetição de indivíduos continue produzindo dependência estatística. A avaliação deve, portanto, preservar a estrutura temporal, manter indivíduos agrupados durante a validação e utilizar um conjunto de teste posterior com prevalência natural.</p>
+<p>A formalização proposta permite tratar a estratégia temporal como parte explícita da especificação do modelo, juntamente com Feature Window, Prediction Horizon, Number of Landmarks e Landmark Stride. Essa separação favorece reprodutibilidade, comparabilidade entre experimentos e interpretação estatística adequada em sistemas de machine learning longitudinal.</p>
+</section>
+<section id="sec-declaracoes" class="level1" data-number="18">
+<h1 data-number="18"><span class="header-section-number">18</span> Declarações</h1>
+<section id="disponibilidade-de-dados" class="level2" data-number="18.1">
+<h2 data-number="18.1" class="anchored" data-anchor-id="disponibilidade-de-dados"><span class="header-section-number">18.1</span> Disponibilidade de dados</h2>
+<p>Este artigo apresenta uma formalização metodológica e não utiliza uma base de dados empírica específica. Em uma aplicação subsequente, a origem, o período de observação, os critérios de inclusão e as regras de acesso aos dados deverão ser declarados nesta seção.</p>
+</section>
+<section id="disponibilidade-de-código" class="level2" data-number="18.2">
+<h2 data-number="18.2" class="anchored" data-anchor-id="disponibilidade-de-código"><span class="header-section-number">18.2</span> Disponibilidade de código</h2>
+<p>O código utilizado para geração das amostras, treinamento, validação e reprodução das análises deverá ser disponibilizado em repositório versionado ou descrito com nível suficiente de detalhe para reprodução independente.</p>
+</section>
+<section id="aspectos-éticos" class="level2" data-number="18.3">
+<h2 data-number="18.3" class="anchored" data-anchor-id="aspectos-éticos"><span class="header-section-number">18.3</span> Aspectos éticos</h2>
+<p>Quando a aplicação envolver dados pessoais, financeiros, clínicos ou outras informações protegidas, deverão ser documentadas as bases legais, aprovações institucionais e medidas de governança aplicáveis.</p>
+</section>
+<section id="conflitos-de-interesse" class="level2" data-number="18.4">
+<h2 data-number="18.4" class="anchored" data-anchor-id="conflitos-de-interesse"><span class="header-section-number">18.4</span> Conflitos de interesse</h2>
+<p>Os autores deverão declarar eventuais conflitos de interesse ou informar sua inexistência.</p>
+</section>
+<section id="financiamento" class="level2" data-number="18.5">
+<h2 data-number="18.5" class="anchored" data-anchor-id="financiamento"><span class="header-section-number">18.5</span> Financiamento</h2>
+<p>As fontes de financiamento deverão ser declaradas, incluindo identificação de projetos e agências financiadoras quando aplicável.</p>
+</section>
+<section id="contribuições-dos-autores" class="level2" data-number="18.6">
+<h2 data-number="18.6" class="anchored" data-anchor-id="contribuições-dos-autores"><span class="header-section-number">18.6</span> Contribuições dos autores</h2>
+<p>As contribuições deverão ser descritas de acordo com uma taxonomia reconhecida, como CRediT, quando exigido pelo periódico ou repositório de publicação.</p>
+</section>
+</section>
+<section id="sec-referencias" class="level1" data-number="19">
+<h1 data-number="19"><span class="header-section-number">19</span> Referências</h1>
+<div id="refs" class="references csl-bib-body" data-entry-spacing="0" data-line-spacing="2" role="list">
+<div id="ref-vanHouwelingen2007" class="csl-entry" role="listitem">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Houwelingen, H. C. van. <a href="https://doi.org/10.1111/j.1467-9469.2006.00529.x">Dynamic Prediction by Landmarking in Event History Analysis</a>. <em>Scandinavian Journal of Statistics</em> <strong>34</strong>, 70–85 (2007).</div>
+</div>
+<div id="ref-vanHouwelingenPutter2012" class="csl-entry" role="listitem">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Houwelingen, H. C. van &amp; Putter, H. <em>Dynamic Prediction in Clinical Survival Analysis</em>. v. 123 (CRC Press, Boca Raton, FL, 2012).</div>
+</div>
+<div id="ref-tanner2021" class="csl-entry" role="listitem">
+<div class="csl-left-margin">3. </div><div class="csl-right-inline">Tanner, K. T., Sharples, L. D., Daniel, R. M. &amp; Keogh, R. H. <a href="https://doi.org/10.1111/rssa.12611">Dynamic Survival Prediction Combining Landmarking with a Machine Learning Ensemble: Methodology and Empirical Comparison</a>. <em>Journal of the Royal Statistical Society: Series A (Statistics in Society)</em> <strong>184</strong>, 3–30 (2021).</div>
+</div>
+<div id="ref-prenticeBreslow1978" class="csl-entry" role="listitem">
+<div class="csl-left-margin">4. </div><div class="csl-right-inline">Prentice, R. L. &amp; Breslow, N. E. <a href="https://doi.org/10.1093/biomet/65.1.153">Retrospective Studies and Failure Time Models</a>. <em>Biometrika</em> <strong>65</strong>, 153–158 (1978).</div>
+</div>
+<div id="ref-greenlandThomas1982" class="csl-entry" role="listitem">
+<div class="csl-left-margin">5. </div><div class="csl-right-inline">Greenland, S. &amp; Thomas, D. C. <a href="https://doi.org/10.1093/oxfordjournals.aje.a113439">On the Need for the Rare Disease Assumption in Case-Control Studies</a>. <em>American Journal of Epidemiology</em> <strong>116</strong>, 547–553 (1982).</div>
+</div>
+<div id="ref-hanleyMiettinen2009" class="csl-entry" role="listitem">
+<div class="csl-left-margin">6. </div><div class="csl-right-inline">Hanley, J. A. &amp; Miettinen, O. S. <a href="https://doi.org/10.2202/1557-4679.1125">Fitting Smooth-in-Time Prognostic Risk Functions via Logistic Regression</a>. <em>The International Journal of Biostatistics</em> <strong>5</strong>, 1–25 (2009).</div>
+</div>
+<div id="ref-bhatnagar2022" class="csl-entry" role="listitem">
+<div class="csl-left-margin">7. </div><div class="csl-right-inline">Bhatnagar, S. R., Turgeon, M., Islam, J., Hanley, J. A. &amp; Saarela, O. <a href="https://doi.org/10.32614/RJ-2022-052">casebase: An Alternative Framework for Survival Analysis and Comparison of Event Rates</a>. <em>The R Journal</em> <strong>14</strong>, 59–79 (2022).</div>
+</div>
+<div id="ref-saarela2016" class="csl-entry" role="listitem">
+<div class="csl-left-margin">8. </div><div class="csl-right-inline">Saarela, O. <a href="https://doi.org/10.1007/s10985-015-9352-x">A Case-Base Sampling Method for Estimating Recurrent Event Intensities</a>. <em>Lifetime Data Analysis</em> <strong>22</strong>, 589–605 (2016).</div>
+</div>
+<div id="ref-kingZeng2001" class="csl-entry" role="listitem">
+<div class="csl-left-margin">9. </div><div class="csl-right-inline">King, G. &amp; Zeng, L. <a href="https://doi.org/10.1093/oxfordjournals.pan.a004868">Logistic Regression in Rare Events Data</a>. <em>Political Analysis</em> <strong>9</strong>, 137–163 (2001).</div>
+</div>
+<div id="ref-davisGoadrich2006" class="csl-entry" role="listitem">
+<div class="csl-left-margin">10. </div><div class="csl-right-inline">Davis, J. &amp; Goadrich, M. The Relationship Between Precision-Recall and ROC Curves. em <em>Proceedings of the 23rd International Conference on Machine Learning</em> 233–240 (ACM, 2006). doi:<a href="https://doi.org/10.1145/1143844.1143874">10.1145/1143844.1143874</a>.</div>
+</div>
+<div id="ref-roberts2017" class="csl-entry" role="listitem">
+<div class="csl-left-margin">11. </div><div class="csl-right-inline">Roberts, D. R. <em>et al.</em> <a href="https://doi.org/10.1111/ecog.02881">Cross-Validation Strategies for Data with Temporal, Spatial, Hierarchical, or Phylogenetic Structure</a>. <em>Ecography</em> <strong>40</strong>, 913–929 (2017).</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
