@@ -5,8 +5,13 @@ on:
     branches:
       - main
       - refactor-report-catalog-template
-    paths-ignore:
-      - "docs/**"
+    paths:
+      - "reports/**"
+      - "styles/**"
+      - "_extensions/nature/**"
+      - "_quarto.yml"
+      - ".nojekyll"
+      - ".github/workflows/render-quarto.yml"
   workflow_dispatch:
 
 permissions:
