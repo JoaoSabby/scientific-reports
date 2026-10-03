@@ -1,0 +1,23 @@
+---
+title: "Scientific Reports"
+subtitle: "Methodological and technical reports in statistics, machine learning, and data science"
+toc: false
+---
+
+This website provides a version-controlled collection of scientific, methodological, and technical reports developed in Quarto.
+
+The repository is organized to preserve methodological independence between reports while maintaining a common publication framework. Each report may maintain its own bibliography, citation style, figures, tables, and supplementary resources.
+
+## Available reports
+
+### Temporal Sampling Strategies for Binary Event Prediction
+
+**Formalização metodológica de Single Landmark, Multiple Landmarks e Event-Based Sampling**
+
+A methodological paper formalizing three temporal sampling strategies for longitudinal binary prediction, with emphasis on rare-event modeling, temporal eligibility, cumulative prediction horizons, calibration, and validation.
+
+[Open report](reports/temporal-sampling/index.qmd)
+
+## Publication model
+
+Source documents are maintained in the `reports/` directory. The complete Quarto website is rendered to `docs/` for publication through GitHub Pages.
