@@ -41,10 +41,13 @@ vignettes/*.pdf
 .env
 
 # pkgdown site
-docs/
+# docs/ is intentionally versioned for GitHub Pages in this repository.
 
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Quarto local state
+.quarto/
