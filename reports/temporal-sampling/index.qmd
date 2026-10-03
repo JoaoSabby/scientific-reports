@@ -1,0 +1,857 @@
+---
+title: "Estratégias de Amostragem Temporal para Predição Binária de Eventos Raros"
+subtitle: "Formalização metodológica de Single Landmark, Multiple Landmarks e Event-Based Sampling"
+author:
+  - name: "Nome do autor"
+    affiliations:
+      - name: "Instituição"
+    email: "email@instituicao.br"
+abstract: |
+  A construção temporal da amostra é uma decisão metodológica central em modelos preditivos binários baseados em dados longitudinais, especialmente quando o evento de interesse é raro. Este trabalho formaliza e compara três estratégias de amostragem temporal: Single Landmark, Multiple Landmarks e Event-Based Sampling. Propõe-se uma notação unificada que separa a construção das features, o instante de referência, o horizonte de predição e o mecanismo de amostragem temporal. Para cada estratégia são definidos o estimando preditivo, a regra de construção da variável resposta, a estrutura da amostra, as condições de elegibilidade e as principais fontes de dependência, viés e desalinhamento entre treinamento e aplicação. Demonstra-se que o uso de múltiplos landmarks com janelas de predição não sobrepostas permite incorporar eventos raros reais de períodos históricos adicionais sem alterar a definição do target, embora produza observações repetidas por indivíduo e uma distribuição temporal composta. Em contraste, a amostragem orientada ao evento condiciona a escolha do tempo de referência à própria ocorrência do desfecho e, quando empregada para enriquecimento da classe positiva, modifica a distribuição amostral e exige tratamento explícito da seleção para interpretação probabilística. Apresenta-se ainda um protocolo de validação destinado à comparação das estratégias sob prevalência natural, com separação temporal, controle de dependência por indivíduo, avaliação por precision-recall, calibração e medidas de erro probabilístico. A formalização fornece uma taxonomia operacional para sistemas de machine learning destinados à predição de eventos raros em bases longitudinais.
+keywords:
+  - amostragem temporal
+  - landmarking
+  - eventos raros
+  - classificação binária
+  - predição longitudinal
+  - risk-set sampling
+lang: pt-BR
+bibliography: reports/temporal-sampling/references.bib
+csl: reports/temporal-sampling/nature.csl
+format:
+  html:
+    toc: true
+    toc-title: "Conteúdo"
+    toc-depth: 3
+    number-sections: true
+    css: reports/temporal-sampling/nature-html.css
+    anchor-sections: true
+    citations-hover: true
+    footnotes-hover: true
+    html-math-method: mathjax
+    fig-cap-location: bottom
+    tbl-cap-location: top
+    code-copy: true
+    code-overflow: wrap
+execute:
+  echo: false
+  warning: false
+---
+
+# Introdução {#sec-introducao}
+
+Problemas de classificação binária construídos a partir de bases longitudinais exigem uma definição explícita de três componentes temporais: o conjunto de informações disponível para a construção das features, o instante em que a predição é conceitualmente realizada e o intervalo futuro no qual o evento é procurado. Em aplicações com eventos raros, uma quarta decisão torna-se especialmente relevante: quantos instantes históricos devem contribuir para a amostra de treinamento.
+
+A literatura de análise de sobrevivência e predição dinâmica formalizou o conceito de *landmarking* como uma estratégia na qual a predição é condicionada às informações disponíveis em um instante temporal de referência, denominado *landmark time*. O modelo é ajustado para indivíduos elegíveis naquele instante e a predição é realizada para um horizonte futuro previamente especificado [@vanHouwelingen2007, pp. 70-85; @vanHouwelingenPutter2012, pp. 105-116]. Trabalhos posteriores mostraram que datasets produzidos em diferentes landmarks podem ser empilhados em uma única estrutura de estimação, permitindo compartilhar informação entre tempos de referência [@tanner2021, pp. 3-30].
+
+Em paralelo, desenhos retrospectivos orientados pela ocorrência do evento constituem uma família metodológica distinta. Na epidemiologia, quando cada caso define um instante e controles são selecionados entre os indivíduos que permanecem sob risco naquele instante, o desenho é denominado *risk-set sampling* ou *incidence-density sampling* [@prenticeBreslow1978, pp. 153-158; @greenlandThomas1982, pp. 547-553]. Abordagens de *case-base sampling* também constroem amostras orientadas à informação de eventos e tempo em risco, porém com mecanismos de amostragem e estimandos específicos [@hanleyMiettinen2009, pp. 1-25; @bhatnagar2022, pp. 59-79].
+
+O objetivo deste artigo metodológico é estabelecer uma taxonomia unificada para três estratégias relevantes em sistemas de predição binária longitudinal: **Single Landmark**, **Multiple Landmarks** e **Event-Based Sampling**. O foco não é propor um novo estimador paramétrico, mas formalizar o desenho de dados que precede o ajuste do algoritmo preditivo. A distinção é particularmente importante em aplicações de eventos raros, nas quais o aumento do número de eventos observados no treinamento pode ser obtido por ampliação temporal da amostra, em vez de depender exclusivamente de reamostragem sintética ou alteração direta da distribuição de classes.
+
+# Contribuição metodológica e escopo {#sec-contribuicao}
+
+A contribuição deste trabalho consiste em separar quatro dimensões que frequentemente são tratadas como uma única decisão de modelagem:
+
+1. **Feature Window**: estrutura temporal utilizada para construir as covariáveis preditoras.
+2. **Landmark Time**: instante temporal no qual as informações são consideradas disponíveis para predição.
+3. **Prediction Horizon**: extensão futura utilizada para definir o target.
+4. **Temporal Sampling Strategy**: regra que determina quais landmarks ou eventos históricos originam registros na amostra de treinamento.
+
+Essa separação permite comparar os três desenhos sem confundir construção de features, definição do target e amostragem temporal. Em particular, a passagem de Single Landmark para Multiple Landmarks não modifica necessariamente a variável resposta. O que se altera é o conjunto de tempos de referência incluídos no treinamento.
+
+O termo **Event-Based Sampling** é empregado neste trabalho como categoria operacional ampla para desenhos nos quais a ocorrência do evento determina retrospectivamente o tempo de referência das covariáveis. Esse termo não deve ser interpretado como sinônimo automático de *risk-set sampling*, *incidence-density sampling* ou *case-base sampling*. Tais denominações possuem definições estatísticas próprias e dependem, entre outros aspectos, da forma de seleção dos controles e do estimando pretendido [@prenticeBreslow1978, pp. 153-158; @saarela2016, pp. 589-605].
+
+# Estrutura temporal e notação {#sec-notacao}
+
+## Índices e processo de eventos
+
+Considere uma população de indivíduos $i=1,\ldots,n$ observada em tempo discreto mensal $t \in \mathcal{T}$. Seja $\mathbf{X}_i(t)$ o vetor de features disponível para o indivíduo $i$ no encerramento do período $t$.
+
+Para um evento que pode ocorrer uma única vez, define-se $T_i$ como o tempo de ocorrência do evento. Para eventos potencialmente recorrentes, utiliza-se o processo de contagem $N_i(t)$, de modo que
+
+$$
+N_i(t+H)-N_i(t)
+$$
+
+representa o número de ocorrências observadas após $t$ e até $t+H$.
+
+Seja ainda $E_i(t) \in \{0,1\}$ o indicador de elegibilidade do indivíduo no tempo $t$. Em problemas de primeiro evento, uma definição comum é
+
+$$
+E_i(t)=I(T_i>t),
+$$
+
+mas, em eventos recorrentes, a regra de elegibilidade pode ser definida pelo processo de negócio ou pelo protocolo científico.
+
+## Feature Window
+
+O vetor $\mathbf{X}_i(t)$ pode combinar diferentes mecanismos temporais de construção de features. Três componentes são particularmente úteis:
+
+**Snapshot feature**: valor observado no próprio tempo de referência,
+
+$$
+X_{ij}^{\text{snap}}(t)=Z_{ij}(t).
+$$
+
+**Summary window**: resumo estatístico dos últimos $A$ períodos,
+
+$$
+X_{ij}^{\text{sum}}(t;A)
+=
+g_j\left\{Z_{ij}(t-A+1),\ldots,Z_{ij}(t)\right\},
+$$
+
+em que $g_j(\cdot)$ pode representar média, mediana, soma, desvio padrão ou outra função de sumarização.
+
+**Lookback window**: extensão retrospectiva máxima $L$ utilizada por features dependentes da trajetória histórica. Para frequência de eventos, por exemplo,
+
+$$
+X_i^{\text{freq}}(t;L)
+=
+N_i(t)-N_i(t-L).
+$$
+
+Para recência, uma forma possível é
+
+$$
+X_i^{\text{rec}}(t;L)
+=
+t-\max\{u: t-L < u \leq t,\ \Delta N_i(u)>0\},
+$$
+
+quando existe uma ocorrência no intervalo retrospectivo.
+
+A condição fundamental de validade temporal é que nenhuma feature utilize informação posterior a $t$:
+
+$$
+\mathbf{X}_i(t) \in \mathcal{F}_t,
+$$
+
+em que $\mathcal{F}_t$ representa a informação disponível até o landmark.
+
+## Prediction Horizon
+
+Seja $H \geq 1$ o **Prediction Horizon**, expresso em meses.
+
+Para uma predição cumulativa, isto é, ocorrência em até $H$ meses, define-se
+
+$$
+Y_i(t;H)
+=
+I\left[N_i(t+H)-N_i(t)\geq 1\right].
+$$ {#eq-target-cumulative}
+
+No caso de um único evento,
+
+$$
+Y_i(t;H)
+=
+I(t<T_i\leq t+H).
+$$
+
+Essa definição é distinta de um target pontual, no qual se deseja prever ocorrência especificamente no período $t+H$:
+
+$$
+Y_i^{\text{point}}(t;H)
+=
+I\left[\Delta N_i(t+H)\geq 1\right].
+$$
+
+Assim, a expressão "evento em até três meses" corresponde a um **cumulative prediction horizon**, enquanto "evento no terceiro mês" corresponde a um **point prediction horizon**.
+
+# Estratégia I: Single Landmark {#sec-single}
+
+## Definição formal
+
+No desenho **Single Landmark**, escolhe-se um único tempo de referência $t_L$. A amostra é formada pelos indivíduos elegíveis nesse instante e o target é determinado pela ocorrência do evento no horizonte futuro $H$.
+
+O dataset é
+
+$$
+\mathcal{D}_{SL}(t_L,H)
+=
+\left\{
+\left(\mathbf{X}_i(t_L),Y_i(t_L;H)\right): E_i(t_L)=1
+\right\}.
+$$
+
+O estimando preditivo é
+
+$$
+p_i(t_L,H)
+=
+P\left(Y_i(t_L;H)=1\mid \mathbf{X}_i(t_L),E_i(t_L)=1\right).
+$$ {#eq-single-estimand}
+
+Essa estrutura corresponde ao princípio central do landmarking: a predição é condicionada à informação disponível em um instante previamente estabelecido [@vanHouwelingen2007, pp. 70-85; @vanHouwelingenPutter2012, pp. 124-132].
+
+## Representação temporal
+
+```text
+PASSADO / FEATURES                FUTURO / TARGET
+
+... Mai  Jun  Jul  Ago | Set  Out  Nov
+                    ^    |<---- H ---->|
+                    |
+              LANDMARK tL
+
+X_i(tL)                  Y_i(tL; H)
+```
+
+Em forma abstrata:
+
+```text
+------------------------|------------------------------> tempo
+                        tL
+                        |--------- H ---------|
+                              EVENTO?
+```
+
+O fluxo lógico é
+
+```text
+tempo de referencia fixo -> construir features -> procurar evento no futuro
+```
+
+## Propriedades estatísticas
+
+Quando todos os indivíduos elegíveis são incluídos, a prevalência observada do target no landmark reproduz a incidência empírica daquele horizonte, sujeita às regras de elegibilidade e censura. Esse desenho é diretamente alinhado à aplicação operacional quando o modelo será utilizado em uma única data de referência.
+
+Para eventos raros, contudo, a quantidade absoluta de positivos pode ser pequena. A dificuldade não decorre apenas da proporção de classes, mas também da limitada informação estatística associada ao número efetivo de eventos. Problemas de eventos raros são reconhecidos como um cenário no qual métodos usuais podem apresentar elevada variância ou probabilidades mal estimadas, especialmente quando o número de eventos é reduzido [@kingZeng2001, pp. 137-163].
+
+# Estratégia II: Multiple Landmarks {#sec-multiple}
+
+## Definição formal
+
+No desenho **Multiple Landmarks**, utiliza-se uma sequência de tempos de referência
+
+$$
+\mathcal{L}=\{t_1,t_2,\ldots,t_K\},
+$$
+
+em que $K$ é o **Number of Landmarks**.
+
+Define-se ainda o **Landmark Stride** $S$, correspondente à distância temporal entre landmarks consecutivos:
+
+$$
+t_{k+1}-t_k=S.
+$$
+
+Para cada $t_k$, constrói-se
+
+$$
+\mathcal{D}_k
+=
+\left\{
+\left(\mathbf{X}_i(t_k),Y_i(t_k;H),t_k\right): E_i(t_k)=1
+\right\}.
+$$
+
+A amostra empilhada é
+
+$$
+\mathcal{D}_{ML}
+=
+\bigcup_{k=1}^{K}\mathcal{D}_k.
+$$ {#eq-stacked}
+
+A literatura de landmarking denomina esse tipo de construção como *stacked landmark dataset* ou *landmark super dataset* quando os datasets de diferentes landmarks são verticalmente combinados [@tanner2021, pp. 3-30]. Modelos que compartilham parâmetros entre landmarks são frequentemente denominados *landmark supermodels* [@vanHouwelingenPutter2012, pp. 105-116].
+
+## Janelas não sobrepostas
+
+Quando
+
+$$
+S=H,
+$$
+
+as janelas consecutivas do target são adjacentes e não se sobrepõem.
+
+Para $H=3$ e $K=4$:
+
+```text
+LANDMARK                 PREDICTION WINDOW
+
+2025-08   | 2025-09  2025-10  2025-11
+    ^     |<--------- H = 3 ---------->|
+    L1
+
+2025-11   | 2025-12  2026-01  2026-02
+    ^     |<--------- H = 3 ---------->|
+    L2
+
+2026-02   | 2026-03  2026-04  2026-05
+    ^     |<--------- H = 3 ---------->|
+    L3
+
+2026-05   | 2026-06  2026-07  2026-08
+    ^     |<--------- H = 3 ---------->|
+    L4
+```
+
+Para aplicação em setembro de 2026, tendo agosto de 2026 como último mês fechado:
+
+```text
+TREINAMENTO
+
+2025-08 -> evento em 2025-09:2025-11
+2025-11 -> evento em 2025-12:2026-02
+2026-02 -> evento em 2026-03:2026-05
+2026-05 -> evento em 2026-06:2026-08
+
+APLICACAO
+
+2026-08 -> prever evento em 2026-09:2026-11
+```
+
+Se $S<H$, as janelas de target se sobrepõem e um mesmo evento pode rotular positivamente mais de um landmark. Se $S>H$, surgem intervalos históricos que não contribuem para nenhum target.
+
+## Proposição 1: cobertura temporal com stride igual ao horizonte
+
+Se os landmarks são igualmente espaçados, $S=H$, e existem $K$ landmarks, então as janelas de target cobrem $KH$ períodos consecutivos sem sobreposição interna entre janelas adjacentes.
+
+De fato, para cada $k$, a janela é
+
+$$
+W_k=(t_k,t_k+H],
+$$
+
+com $t_{k+1}=t_k+H$. Logo,
+
+$$
+W_k\cap W_{k+1}=\varnothing
+$$
+
+em tempo discreto, considerando que o limite final de $W_k$ coincide com o landmark seguinte e não pertence à janela posterior.
+
+A não sobreposição das janelas **não implica independência estatística**. O mesmo indivíduo pode contribuir em múltiplos landmarks, produzindo dependência intrassujeito. Essa característica é central em datasets landmark empilhados e deve ser preservada na validação e, quando houver inferência paramétrica, na estimação da incerteza [@tanner2021, pp. 3-30].
+
+## Estimando e interpretação
+
+Se o algoritmo inclui explicitamente o landmark ou se assume estabilidade temporal, o objetivo pode ser escrito como
+
+$$
+p_i(t_k,H)
+=
+P\left(Y_i(t_k;H)=1\mid \mathbf{X}_i(t_k),t_k,E_i(t_k)=1\right).
+$$
+
+Quando $t_k$ não é incluído, o modelo ajustado sobre o dataset empilhado aproxima uma relação média sobre a distribuição histórica dos landmarks:
+
+$$
+P(Y=1\mid \mathbf{X})
+=
+\sum_{k=1}^{K}
+P(Y=1\mid \mathbf{X},t_k)P(t_k\mid \mathbf{X}).
+$$
+
+Portanto, Multiple Landmarks aumenta a quantidade de eventos observados, mas também cria uma mistura temporal. A validade da extrapolação para o landmark corrente depende da estabilidade do mecanismo gerador de dados ou de estratégias explícitas para acomodar deriva temporal.
+
+# Estratégia III: Event-Based Sampling {#sec-event}
+
+## Definição operacional
+
+No **Event-Based Sampling**, o processo de construção da amostra é iniciado pela localização de eventos históricos. Seja $\tau_{ij}$ o tempo da $j$-ésima ocorrência do evento para o indivíduo $i$. Define-se um deslocamento retrospectivo $\delta$ e um tempo de ancoragem
+
+$$
+a_{ij}=\tau_{ij}-\delta.
+$$
+
+A observação positiva é então construída a partir de
+
+$$
+\left(\mathbf{X}_i(a_{ij}),Y_{ij}=1\right).
+$$
+
+O sentido temporal é inverso ao landmarking.
+
+```text
+LANDMARKING
+
+tempo fixo -> features -> procura evento no horizonte futuro
+
+EVENT-BASED SAMPLING
+
+procura evento -> define retrospectivamente o tempo das features
+```
+
+Representação:
+
+```text
+PASSADO                                      EVENTO
+
+... Abr  Mai  Jun  Jul | Ago
+                   ^      ^
+                   |      |
+               FEATURES  tau_ij
+                   |
+              a_ij=tau_ij-delta
+```
+
+## Proposição 2: condicionamento da posição do evento
+
+Se todas as observações positivas forem construídas com $\delta=1$, então, por construção,
+
+$$
+P\left(T_i=a_{ij}+1\mid Y_{ij}=1,\text{selecionado}\right)=1.
+$$
+
+Consequentemente, esse desenho não é equivalente ao problema
+
+$$
+P\left(t<T_i\leq t+H\mid \mathbf{X}_i(t)\right)
+$$
+
+para $H>1$, pois a distribuição da posição do evento dentro do horizonte é degenerada em $t+1$. Em particular, utilizar features do mês imediatamente anterior ao evento para todos os casos positivos treina o modelo em um cenário no qual o evento positivo ocorre necessariamente no próximo mês, ainda que a aplicação operacional tenha como objetivo a ocorrência em qualquer um dos próximos $H$ meses.
+
+Uma alternativa seria definir $\delta \in \{1,\ldots,H\}$ segundo uma regra preestabelecida. Entretanto, a escolha de $\delta$ passa a integrar o mecanismo de amostragem e deve ser considerada na interpretação probabilística.
+
+## Relação com risk-set e incidence-density sampling
+
+O Event-Based Sampling, conforme definido neste artigo, é uma categoria ampla. Quando, para cada evento ocorrido em $\tau$, controles são selecionados aleatoriamente entre indivíduos pertencentes ao conjunto de risco $\mathcal{R}(\tau)$, obtém-se uma estrutura correspondente a *risk-set sampling* ou *incidence-density sampling* em desenhos caso-controle aninhados [@prenticeBreslow1978, pp. 153-158; @greenlandThomas1982, pp. 547-553].
+
+Pode-se representar o conjunto de risco como
+
+$$
+\mathcal{R}(\tau)
+=
+\{i:E_i(\tau)=1\}.
+$$
+
+Para um caso $c$ ocorrido em $\tau_c$, seleciona-se um subconjunto de controles
+
+$$
+\mathcal{C}(\tau_c)\subset \mathcal{R}(\tau_c)\setminus\{c\}.
+$$
+
+Essa construção possui propriedades inferenciais específicas e não deve ser confundida com uma seleção genérica de negativos históricos. Da mesma forma, *case-base sampling* possui uma formulação própria baseada na amostragem de person-moments e modelagem da função de risco [@hanleyMiettinen2009, pp. 1-25; @bhatnagar2022, pp. 59-79].
+
+## Proposição 3: alteração das probabilidades pela seleção de classes
+
+Considere um indicador $S_i$ que representa inclusão na amostra Event-Based e probabilidades de seleção
+
+$$
+\pi_1=P(S_i=1\mid Y_i=1),
+$$
+
+$$
+\pi_0=P(S_i=1\mid Y_i=0).
+$$
+
+Se a seleção depender da classe, mas for condicionalmente independente de $\mathbf{X}$ dado $Y$, então as odds na amostra satisfazem
+
+$$
+\frac{P_s(Y=1\mid \mathbf{X})}{P_s(Y=0\mid \mathbf{X})}
+=
+\frac{\pi_1}{\pi_0}
+\frac{P(Y=1\mid \mathbf{X})}{P(Y=0\mid \mathbf{X})}.
+$$ {#eq-selection-odds}
+
+Logo, enriquecimento deliberado de eventos altera o intercepto probabilístico. Para um modelo logístico corretamente especificado,
+
+$$
+\operatorname{logit}P(Y=1\mid \mathbf{X})
+=
+\operatorname{logit}P_s(Y=1\mid \mathbf{X})
+-
+\log\left(\frac{\pi_1}{\pi_0}\right).
+$$
+
+Essa propriedade explica por que estratégias de amostragem que aumentam artificialmente a prevalência da classe positiva podem preservar parte da informação discriminativa e, simultaneamente, produzir probabilidades não calibradas para a população original. A literatura de eventos raros enfatiza a necessidade de distinguir eficiência amostral de estimação da probabilidade populacional [@kingZeng2001, pp. 137-163].
+
+# Comparação formal das estratégias {#sec-comparacao}
+
+| Propriedade | Single Landmark | Multiple Landmarks | Event-Based Sampling |
+|---|---|---|---|
+| Âncora temporal | Um tempo predefinido $t_L$ | Vários tempos predefinidos $t_k$ | Tempo do evento $\tau$ |
+| Direção lógica | $t \rightarrow$ evento futuro | $t_k \rightarrow$ evento futuro | evento $\rightarrow$ tempo retrospectivo |
+| Definição típica do target | $I[N(t+H)-N(t)\geq1]$ | Mesma definição em cada $t_k$ | Positivos determinados pela ocorrência observada |
+| Quantidade de snapshots | 1 | $K$ | Determinada pelo número de eventos e regra de amostragem |
+| Prevalência natural preservada | Sim, se população elegível completa | Em cada landmark, sim; no stack ocorre mistura temporal | Não necessariamente |
+| Repetição do indivíduo | Não dentro do landmark | Frequente | Possível, especialmente com eventos recorrentes |
+| Dependência temporal | Uma janela | Entre snapshots do mesmo indivíduo e entre períodos históricos | Dependente do desenho de casos e controles |
+| Adequação direta à aplicação em $t$ | Alta | Alta se a distribuição histórica representar o tempo atual | Depende da regra de ancoragem e correção de seleção |
+| Principal vantagem para evento raro | Simplicidade e prevalência real | Mais eventos reais sem sintetização | Forte enriquecimento da classe positiva |
+| Principal risco | Poucos positivos | Drift temporal e pseudorreplicação | Viés de seleção e desalinhamento do horizonte |
+
+: Comparação conceitual das três estratégias de amostragem temporal. {#tbl-comparacao}
+
+A distinção fundamental pode ser resumida por
+
+$$
+\text{Single Landmark: } t_L \rightarrow T,
+$$
+
+$$
+\text{Multiple Landmarks: } \{t_1,\ldots,t_K\} \rightarrow T,
+$$
+
+$$
+\text{Event-Based Sampling: } T \rightarrow t.
+$$
+
+# Implicações para eventos raros {#sec-raros}
+
+## Informação adicional sem geração sintética
+
+Em Multiple Landmarks, o aumento da quantidade de positivos decorre da utilização de eventos reais observados em períodos históricos adicionais. Se a probabilidade de evento em cada horizonte for aproximadamente $p$, o número esperado de positivos no dataset empilhado é
+
+$$
+E[N_+]
+=
+\sum_{k=1}^{K} n_k p_k,
+$$
+
+em que $n_k$ é o número de indivíduos elegíveis e $p_k$ a incidência do evento no landmark $k$.
+
+Se $n_k\approx n$ e $p_k\approx p$, então
+
+$$
+E[N_+]\approx Knp.
+$$
+
+Essa relação não implica que a informação estatística cresça exatamente por um fator $K$, porque indivíduos repetidos geram correlação e porque a distribuição temporal pode variar. Ainda assim, a estratégia pode elevar substancialmente o número bruto de eventos disponíveis sem criar observações sintéticas.
+
+## Rareza e avaliação discriminativa
+
+Em problemas altamente desbalanceados, a avaliação deve evitar dependência exclusiva da área sob a curva ROC. Curvas precision-recall são especialmente informativas quando a classe positiva é rara, porque precision incorpora diretamente a proporção de verdadeiros positivos entre as predições positivas [@davisGoadrich2006, pp. 233-240].
+
+A métrica central recomendada para comparação discriminativa é a área sob a curva precision-recall, PR-AUC. Entretanto, a comparação metodológica não deve ser restrita à discriminação. Modelos utilizados para produzir probabilidades individuais exigem avaliação de calibração e erro probabilístico.
+
+## Mistura temporal em Multiple Landmarks
+
+No dataset empilhado, a prevalência global é
+
+$$
+\bar{p}
+=
+\frac{\sum_{k=1}^{K}n_kp_k}{\sum_{k=1}^{K}n_k}.
+$$
+
+Essa quantidade representa uma média ponderada das prevalências históricas e pode diferir da prevalência do landmark de aplicação. Portanto, mesmo sem subamostragem de negativos, mudanças temporais em $p_k$ podem exigir recalibração no período atual.
+
+Uma extensão possível consiste em atribuir pesos temporais $w_k$:
+
+$$
+\mathcal{L}(f)
+=
+\sum_{k=1}^{K}w_k
+\sum_{i:E_i(t_k)=1}
+\ell\left(Y_i(t_k;H),f(\mathbf{X}_i(t_k),t_k)\right),
+$$
+
+com maior peso para landmarks recentes. Essa extensão deve ser tratada como decisão adicional e validada empiricamente.
+
+# Protocolo de validação metodológica {#sec-validacao}
+
+Um Methodological Paper deve demonstrar não apenas a formulação dos métodos, mas também como suas propriedades serão avaliadas de maneira reproduzível. Para os três desenhos, recomenda-se um protocolo comum de comparação.
+
+## Conjunto de teste fixo e representativo
+
+As estratégias devem ser comparadas sobre **o mesmo conjunto de teste**, construído em um landmark posterior ao período utilizado para treinamento. O teste deve manter a prevalência natural e não deve ser submetido a oversampling, undersampling ou seleção orientada ao evento.
+
+Se $t_{test}$ for o landmark de teste,
+
+$$
+\mathcal{D}_{test}
+=
+\left\{
+\left(\mathbf{X}_i(t_{test}),Y_i(t_{test};H)\right):E_i(t_{test})=1
+\right\}.
+$$
+
+Essa escolha aproxima a avaliação do cenário operacional real.
+
+## Separação temporal
+
+Dados longitudinais possuem dependência temporal, e validação aleatória ingênua pode subestimar o erro de generalização quando observações temporalmente relacionadas aparecem em treino e validação [@roberts2017, pp. 913-929]. Recomenda-se uma avaliação do tipo *rolling-origin* ou uma separação temporal estrita.
+
+```text
+TEMPO ------------------------------------------------------------>
+
+[ landmarks de treinamento ] [ validacao ] [ teste final ]
+
+       passado                  futuro       futuro mais recente
+```
+
+## Agrupamento por indivíduo
+
+Quando Multiple Landmarks é utilizado, o mesmo indivíduo pode aparecer em diversos snapshots. Se validação cruzada for empregada dentro do período de treinamento, todos os registros do mesmo indivíduo devem permanecer no mesmo fold:
+
+$$
+\operatorname{fold}(i,t_1)
+=
+\operatorname{fold}(i,t_2)
+=
+\cdots
+=
+\operatorname{fold}(i,t_K).
+$$
+
+Essa regra impede que o modelo seja treinado com o histórico de um indivíduo e validado sobre outro snapshot do mesmo indivíduo.
+
+## Métricas
+
+Recomenda-se reportar, no mínimo:
+
+1. PR-AUC, como medida principal de discriminação para evento raro [@davisGoadrich2006, pp. 233-240].
+2. ROC-AUC, como medida complementar.
+3. Brier Score, para erro probabilístico.
+4. Log Loss, para penalização de probabilidades incorretas com alta confiança.
+5. Calibration-in-the-large, ou intercepto de calibração.
+6. Slope de calibração.
+7. Curva de calibração por decis ou quantis de risco.
+8. Sensibilidade em níveis operacionais predefinidos de precision, PPV ou capacidade de abordagem.
+
+Intervalos de confiança devem considerar a unidade de dependência. Em datasets com múltiplos registros por indivíduo, o bootstrap deve ser realizado preferencialmente no nível do indivíduo, não no nível da linha.
+
+# Plano de avaliação empírica {#sec-plano}
+
+A comparação entre estratégias deve separar o efeito da **amostragem temporal** do efeito do **algoritmo de machine learning**. Recomenda-se fixar o algoritmo, as features, os hiperparâmetros ou o procedimento de tuning e variar somente o desenho de amostra.
+
+## Cenários mínimos
+
+**Cenário A: Single Landmark**
+
+$$
+\mathcal{D}_{train}=\mathcal{D}_{SL}(t_0,H).
+$$
+
+**Cenário B: Multiple Landmarks com janelas não sobrepostas**
+
+$$
+S=H,
+$$
+
+$$
+\mathcal{D}_{train}=\bigcup_{k=1}^{K}\mathcal{D}_k.
+$$
+
+**Cenário C: Event-Based Sampling**
+
+Todos os eventos do período histórico elegível são identificados, as features são ancoradas por uma regra $a=\tau-\delta$ e os negativos são selecionados por um protocolo explicitamente documentado.
+
+## Quantidades a reportar
+
+Para cada cenário devem ser reportados:
+
+- número total de linhas;
+- número de indivíduos únicos;
+- número de positivos;
+- prevalência amostral;
+- número médio de registros por indivíduo;
+- distribuição dos landmarks;
+- distribuição da posição do evento dentro do horizonte;
+- PR-AUC no teste de prevalência natural;
+- calibração;
+- estabilidade por landmark;
+- custo computacional.
+
+## Hipóteses metodológicas testáveis
+
+A avaliação empírica pode testar as seguintes hipóteses:
+
+**H1.** Multiple Landmarks aumenta o número de eventos reais disponíveis para estimação em relação a Single Landmark.
+
+**H2.** O ganho de discriminação de Multiple Landmarks depende da estabilidade temporal de $P(Y\mid\mathbf{X},t)$.
+
+**H3.** Event-Based Sampling pode aumentar a capacidade discriminativa aparente durante o treinamento, mas requer correção ou recalibração quando a prevalência amostral difere da prevalência populacional.
+
+**H4.** Ancoragem de todos os positivos imediatamente antes do evento altera a distribuição temporal condicional do target e pode degradar o desempenho para um cumulative prediction horizon com $H>1$.
+
+# Algoritmos de construção {#sec-algoritmos}
+
+## Single Landmark
+
+```text
+Entrada:
+  landmark tL
+  horizonte H
+  tabela de features por cliente e mes
+  tabela de eventos por cliente e data
+
+Para cada cliente elegivel em tL:
+  X <- features disponiveis ate tL
+  Y <- 1 se existir evento em (tL, tL + H]
+       0 caso contrario
+
+Saida:
+  uma linha por cliente elegivel
+```
+
+## Multiple Landmarks
+
+```text
+Entrada:
+  landmark mais recente t0
+  horizonte H
+  numero de landmarks K
+  stride S
+
+Para k = 0,...,K-1:
+  tk <- t0 - k*S
+
+  Para cada cliente elegivel em tk:
+    X <- features disponiveis ate tk
+    Y <- 1 se existir evento em (tk, tk + H]
+         0 caso contrario
+
+Empilhar todos os datasets de landmark
+Preservar cliente e landmark como identificadores
+```
+
+No desenho de janelas não sobrepostas:
+
+$$
+S=H.
+$$
+
+## Event-Based Sampling
+
+```text
+Entrada:
+  periodo historico
+  deslocamento delta
+  regra de selecao de controles
+
+Localizar todas as ocorrencias elegiveis do evento
+
+Para cada evento em tau:
+  anchor <- tau - delta
+  X_case <- features disponiveis ate anchor
+
+  Selecionar controles conforme protocolo definido
+  Construir X_control no tempo de referencia correspondente
+
+Registrar probabilidades ou fracoes de amostragem quando aplicavel
+```
+
+# Critérios de escolha {#sec-escolha}
+
+A escolha entre estratégias deve ser determinada pelo estimando operacional e pelo mecanismo de geração dos dados.
+
+**Single Landmark** é apropriado quando se deseja máxima correspondência entre treinamento e uma única fotografia operacional e o número de eventos é suficiente para ajuste e validação.
+
+**Multiple Landmarks** é apropriado quando os snapshots históricos podem ser reconstruídos de forma consistente, as features são definidas independentemente do evento e se deseja ampliar o número de eventos reais observados mantendo a mesma definição prospectiva do target. Esse desenho é particularmente natural quando a infraestrutura de features já armazena valores por cliente, mês de referência e parâmetros de janela.
+
+**Event-Based Sampling** é apropriado quando a amostragem orientada ao evento é parte deliberada do desenho e existe um protocolo estatístico para selecionar observações de comparação. Se probabilidades absolutas forem o produto final, o mecanismo de amostragem deve ser incorporado à estimação ou seguido de recalibração em uma amostra representativa.
+
+# Validade, vieses e ameaças metodológicas {#sec-vieses}
+
+## Leakage temporal
+
+Qualquer feature calculada com informação posterior ao landmark viola a ordem temporal da predição. Para todas as estratégias deve ser garantido
+
+$$
+\max\{u:Z_i(u)\text{ contribui para }\mathbf{X}_i(t)\}\leq t.
+$$
+
+## Dependência por repetição do indivíduo
+
+Multiple Landmarks transforma a unidade observacional de indivíduo em **indivíduo-tempo**. O número de linhas deixa de representar o número de unidades estatisticamente independentes.
+
+## Drift temporal
+
+A hipótese implícita de pooling temporal é enfraquecida quando
+
+$$
+P_t(Y\mid\mathbf{X})
+$$
+
+varia substancialmente entre landmarks. Deve-se avaliar desempenho e calibração separadamente por período antes de assumir estabilidade.
+
+## Censura e observabilidade do horizonte
+
+Um landmark histórico só pode ser utilizado quando o horizonte completo do target é observável. Se $t_{max}$ for o último período fechado com eventos disponíveis, exige-se
+
+$$
+t_k+H\leq t_{max}.
+$$
+
+Para agosto de 2026 como último mês fechado e $H=3$, maio de 2026 é o landmark histórico mais recente cujo target de junho a agosto pode ser completamente observado.
+
+## Eventos recorrentes
+
+Quando o evento pode ocorrer mais de uma vez, deve-se explicitar se uma ocorrência anterior remove o indivíduo do conjunto elegível, inicia um período refratário ou permite novo target positivo em landmarks posteriores. Essa decisão altera $E_i(t)$ e deve ser tratada como parte da definição do problema, não como detalhe de implementação.
+
+# Reprodutibilidade e especificação mínima {#sec-reprodutibilidade}
+
+Para que um estudo seja reproduzível, a especificação metodológica deve registrar pelo menos os seguintes elementos:
+
+| Componente | Símbolo | Exemplo |
+|---|---:|---:|
+| Data de referência | $t$ | 2026-08 |
+| Summary Window | $A$ | 6 meses |
+| Lookback Window | $L$ | 36 meses |
+| Prediction Horizon | $H$ | 3 meses |
+| Tipo de horizonte |  | cumulative |
+| Sampling Strategy |  | multiple landmarks |
+| Number of Landmarks | $K$ | 4 |
+| Landmark Stride | $S$ | 3 meses |
+| Regra de elegibilidade | $E_i(t)$ | definida pelo protocolo |
+| Definição do evento |  | ao menos uma ocorrência |
+| Regra de repetição do cliente |  | permitida entre landmarks |
+| Regra de seleção de controles |  | aplicável ao Event-Based |
+
+: Especificação temporal mínima para reprodutibilidade. {#tbl-especificacao}
+
+Em aplicações profissionais, recomenda-se que esses parâmetros sejam persistidos junto ao artefato do modelo, pois constituem parte da definição estatística do treinamento e não apenas parâmetros de execução.
+
+# Discussão {#sec-discussao}
+
+Os três desenhos diferem fundamentalmente no mecanismo que determina o tempo de referência. Single Landmark e Multiple Landmarks são prospectivos em sua construção lógica: primeiro estabelece-se o tempo $t$, congelam-se as informações disponíveis e, posteriormente, verifica-se a ocorrência do evento. Event-Based Sampling é retrospectivo em sua construção amostral: primeiro identifica-se a ocorrência e, a partir dela, determina-se o tempo no qual as covariáveis serão observadas.
+
+A distinção é relevante porque a seleção da amostra pode alterar o estimando. Em Multiple Landmarks, quando todos os indivíduos elegíveis são utilizados em cada tempo, a definição do target permanece inalterada e o ganho de informação provém da ampliação do eixo temporal. Em Event-Based Sampling, a seleção de positivos e negativos pode alterar as odds amostrais, exigindo maior atenção à calibração e à interpretação de probabilidades.
+
+No contexto de eventos raros, Multiple Landmarks ocupa uma posição metodologicamente atraente quando snapshots históricos consistentes estão disponíveis. O método aumenta o número de eventos observados sem modificar diretamente a classe e sem exigir que o próprio evento determine a data das features. A literatura de landmarking demonstra que o empilhamento de datasets em diferentes tempos de referência é uma construção estatística estabelecida para predição dinâmica [@tanner2021, pp. 3-30; @vanHouwelingenPutter2012, pp. 105-116].
+
+Isso não implica superioridade universal. Se houver forte drift temporal, períodos históricos antigos podem reduzir a relevância para o presente. Se a ocorrência do evento modifica substancialmente a trajetória posterior das features, regras de elegibilidade e recorrência precisam ser explicitadas. Se a coleta ou processamento de covariáveis for oneroso, desenhos orientados ao evento e amostragem eficiente de controles podem ser preferíveis, desde que acompanhados da teoria inferencial apropriada [@prenticeBreslow1978, pp. 153-158; @hanleyMiettinen2009, pp. 1-25].
+
+# Limitações {#sec-limitacoes}
+
+A taxonomia proposta abstrai particularidades do algoritmo preditivo. Modelos de sobrevivência, regressão logística, gradient boosting, redes neurais e outros métodos podem responder de maneira distinta à repetição de indivíduos e à mudança de prevalência.
+
+O termo Event-Based Sampling é utilizado como categoria operacional e não substitui denominações formais de desenhos epidemiológicos específicos. Quando a implementação corresponder a *risk-set sampling*, *incidence-density sampling*, *nested case-control* ou *case-base sampling*, a nomenclatura específica deve ser utilizada.
+
+As expressões apresentadas assumem tempo discreto mensal para compatibilidade com o cenário motivador. A formulação pode ser estendida para tempo contínuo substituindo intervalos discretos por processos de contagem e funções de risco.
+
+Finalmente, o presente artigo formaliza o desenho metodológico e estabelece um protocolo de avaliação. A demonstração empírica de superioridade entre estratégias depende do processo gerador de dados e deve ser realizada em bases reais e, idealmente, em estudos de simulação controlados.
+
+# Conclusão {#sec-conclusao}
+
+Single Landmark, Multiple Landmarks e Event-Based Sampling representam três mecanismos distintos de construção temporal de amostras preditivas. No primeiro, um único marco temporal antecede o horizonte do target. No segundo, o mesmo problema prospectivo é reconstruído em vários marcos históricos e os datasets são empilhados. No terceiro, a ocorrência do evento inicia o processo de amostragem e determina retrospectivamente o tempo das covariáveis.
+
+Para predição binária de eventos raros com features historicamente disponíveis por mês de referência, Multiple Landmarks permite ampliar a base com eventos reais sem alterar a definição prospectiva do target. Quando o landmark stride é igual ao prediction horizon, as janelas do target são não sobrepostas, embora a repetição de indivíduos continue produzindo dependência estatística. A avaliação deve, portanto, preservar a estrutura temporal, manter indivíduos agrupados durante a validação e utilizar um conjunto de teste posterior com prevalência natural.
+
+A formalização proposta permite tratar a estratégia temporal como parte explícita da especificação do modelo, juntamente com Feature Window, Prediction Horizon, Number of Landmarks e Landmark Stride. Essa separação favorece reprodutibilidade, comparabilidade entre experimentos e interpretação estatística adequada em sistemas de machine learning longitudinal.
+
+# Declarações {#sec-declaracoes}
+
+## Disponibilidade de dados
+
+Este artigo apresenta uma formalização metodológica e não utiliza uma base de dados empírica específica. Em uma aplicação subsequente, a origem, o período de observação, os critérios de inclusão e as regras de acesso aos dados deverão ser declarados nesta seção.
+
+## Disponibilidade de código
+
+O código utilizado para geração das amostras, treinamento, validação e reprodução das análises deverá ser disponibilizado em repositório versionado ou descrito com nível suficiente de detalhe para reprodução independente.
+
+## Aspectos éticos
+
+Quando a aplicação envolver dados pessoais, financeiros, clínicos ou outras informações protegidas, deverão ser documentadas as bases legais, aprovações institucionais e medidas de governança aplicáveis.
+
+## Conflitos de interesse
+
+Os autores deverão declarar eventuais conflitos de interesse ou informar sua inexistência.
+
+## Financiamento
+
+As fontes de financiamento deverão ser declaradas, incluindo identificação de projetos e agências financiadoras quando aplicável.
+
+## Contribuições dos autores
+
+As contribuições deverão ser descritas de acordo com uma taxonomia reconhecida, como CRediT, quando exigido pelo periódico ou repositório de publicação.
+
+# Referências {#sec-referencias}
+
+:::{#refs}
+:::
