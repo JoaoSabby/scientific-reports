@@ -30,6 +30,7 @@ format:
     tbl-cap-location: top
     code-copy: true
     code-overflow: wrap
+    include-after-body: ../../includes/report-downloads.html
 execute:
   echo: false
   warning: false
