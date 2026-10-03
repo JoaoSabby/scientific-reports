@@ -1,0 +1,52 @@
+/* Shared scientific HTML styling for technical reports */
+
+:root {
+  --report-text-width: 860px;
+}
+
+.quarto-title-block .quarto-title-banner {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+#quarto-content main.content {
+  line-height: 1.65;
+}
+
+main.content > section,
+main.content > p,
+main.content > table,
+main.content > pre,
+main.content > .cell,
+main.content > .callout {
+  max-width: var(--report-text-width);
+}
+
+.abstract {
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+table {
+  font-size: 0.94rem;
+}
+
+.math.display {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.references {
+  font-size: 0.94rem;
+}
+
+@media (max-width: 768px) {
+  #quarto-content main.content {
+    line-height: 1.55;
+  }
+}

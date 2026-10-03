@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="João B. G. de Brito">
+<meta name="keywords" content="relatório técnico científico, Quarto, Nature, Springer Nature, reprodutibilidade">
+
+<title>Template de Relatório Técnico Científico</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-5512be24678217c83c999907ff91d92d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles/nature-report.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Conteúdo</h2>
+   
+  <ul>
+  <li><a href="#finalidade-do-template" id="toc-finalidade-do-template" class="nav-link active" data-scroll-target="#finalidade-do-template"><span class="header-section-number">1</span> Finalidade do template</a></li>
+  <li><a href="#estrutura-recomendada" id="toc-estrutura-recomendada" class="nav-link" data-scroll-target="#estrutura-recomendada"><span class="header-section-number">2</span> Estrutura recomendada</a></li>
+  <li><a href="#introdução" id="toc-introdução" class="nav-link" data-scroll-target="#introdução"><span class="header-section-number">3</span> Introdução</a></li>
+  <li><a href="#objetivo-e-questão-técnica" id="toc-objetivo-e-questão-técnica" class="nav-link" data-scroll-target="#objetivo-e-questão-técnica"><span class="header-section-number">4</span> Objetivo e questão técnica</a></li>
+  <li><a href="#dados-e-elegibilidade" id="toc-dados-e-elegibilidade" class="nav-link" data-scroll-target="#dados-e-elegibilidade"><span class="header-section-number">5</span> Dados e elegibilidade</a></li>
+  <li><a href="#métodos" id="toc-métodos" class="nav-link" data-scroll-target="#métodos"><span class="header-section-number">6</span> Métodos</a>
+  <ul class="collapse">
+  <li><a href="#formulação-matemática" id="toc-formulação-matemática" class="nav-link" data-scroll-target="#formulação-matemática"><span class="header-section-number">6.1</span> Formulação matemática</a></li>
+  <li><a href="#procedimento-computacional" id="toc-procedimento-computacional" class="nav-link" data-scroll-target="#procedimento-computacional"><span class="header-section-number">6.2</span> Procedimento computacional</a></li>
+  </ul></li>
+  <li><a href="#resultados" id="toc-resultados" class="nav-link" data-scroll-target="#resultados"><span class="header-section-number">7</span> Resultados</a></li>
+  <li><a href="#discussão" id="toc-discussão" class="nav-link" data-scroll-target="#discussão"><span class="header-section-number">8</span> Discussão</a></li>
+  <li><a href="#limitações" id="toc-limitações" class="nav-link" data-scroll-target="#limitações"><span class="header-section-number">9</span> Limitações</a></li>
+  <li><a href="#conclusão" id="toc-conclusão" class="nav-link" data-scroll-target="#conclusão"><span class="header-section-number">10</span> Conclusão</a></li>
+  <li><a href="#tabelas" id="toc-tabelas" class="nav-link" data-scroll-target="#tabelas"><span class="header-section-number">11</span> Tabelas</a></li>
+  <li><a href="#citações-e-referências" id="toc-citações-e-referências" class="nav-link" data-scroll-target="#citações-e-referências"><span class="header-section-number">12</span> Citações e referências</a></li>
+  <li><a href="#compatibilidade-com-springer-nature" id="toc-compatibilidade-com-springer-nature" class="nav-link" data-scroll-target="#compatibilidade-com-springer-nature"><span class="header-section-number">13</span> Compatibilidade com Springer Nature</a></li>
+  <li><a href="#reprodutibilidade" id="toc-reprodutibilidade" class="nav-link" data-scroll-target="#reprodutibilidade"><span class="header-section-number">14</span> Reprodutibilidade</a></li>
+  <li><a href="#disponibilidade-de-dados-e-código" id="toc-disponibilidade-de-dados-e-código" class="nav-link" data-scroll-target="#disponibilidade-de-dados-e-código"><span class="header-section-number">15</span> Disponibilidade de dados e código</a></li>
+  <li><a href="#ética-e-governança" id="toc-ética-e-governança" class="nav-link" data-scroll-target="#ética-e-governança"><span class="header-section-number">16</span> Ética e governança</a></li>
+  <li><a href="#financiamento" id="toc-financiamento" class="nav-link" data-scroll-target="#financiamento"><span class="header-section-number">17</span> Financiamento</a></li>
+  <li><a href="#conflitos-de-interesse" id="toc-conflitos-de-interesse" class="nav-link" data-scroll-target="#conflitos-de-interesse"><span class="header-section-number">18</span> Conflitos de interesse</a></li>
+  <li><a href="#checklist-de-publicação" id="toc-checklist-de-publicação" class="nav-link" data-scroll-target="#checklist-de-publicação"><span class="header-section-number">19</span> Checklist de publicação</a></li>
+  <li><a href="#referências" id="toc-referências" class="nav-link" data-scroll-target="#referências"><span class="header-section-number">20</span> Referências</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Template de Relatório Técnico Científico</h1>
+<p class="subtitle lead">Guia para composição de relatórios científicos em Quarto com referências no padrão Nature/Springer Nature</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Autor</div>
+    <div class="quarto-title-meta-contents">
+             <p>João B. G. de Brito </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Resumo</div>
+    <p>Este documento constitui um guia reutilizável para a elaboração de relatórios técnicos científicos em Quarto. A estrutura proposta prioriza definição explícita do problema, fundamentação científica, formalização metodológica, reprodutibilidade, apresentação objetiva de resultados, discussão de limitações e rastreabilidade bibliográfica. O HTML utiliza um estilo de citações compatível com a convenção Nature, enquanto o repositório também incorpora a extensão Quarto de Springer Nature derivada do projeto christopherkenny/nature para compatibilidade futura com saída em PDF.</p>
+  </div>
+</div>
+
+<div>
+  <div class="keywords">
+    <div class="block-title">Palavras-chave</div>
+    <p>relatório técnico científico, Quarto, Nature, Springer Nature, reprodutibilidade</p>
+  </div>
+</div>
+
+</header>
+
+
+<section id="finalidade-do-template" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Finalidade do template</h1>
+<p>Este documento deve ser utilizado como guia de composição para relatórios técnicos científicos mantidos neste repositório. O objetivo não consiste em reproduzir integralmente as exigências editoriais de um periódico específico, mas em estabelecer uma estrutura científica consistente, auditável e reutilizável para publicação em HTML.</p>
+<p>A convenção bibliográfica adotada no HTML segue o estilo Nature por meio de CSL. O repositório também contém, em <code>_extensions/nature/</code>, a extensão Quarto baseada no template oficial de Springer Nature e distribuída pelo projeto <a href="https://github.com/christopherkenny/nature">christopherkenny/nature</a>. Essa extensão oferece suporte ao formato <code>nature-pdf</code> quando uma versão PDF for necessária.</p>
+</section>
+<section id="estrutura-recomendada" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Estrutura recomendada</h1>
+<p>Um relatório técnico científico deve apresentar, quando aplicável, os seguintes componentes:</p>
+<ol type="1">
+<li>resumo técnico;</li>
+<li>definição do problema e objetivo;</li>
+<li>fundamentação científica;</li>
+<li>dados e critérios de elegibilidade;</li>
+<li>métodos e formalização matemática;</li>
+<li>desenho experimental ou protocolo de avaliação;</li>
+<li>resultados;</li>
+<li>discussão;</li>
+<li>limitações;</li>
+<li>conclusão;</li>
+<li>disponibilidade de dados e código;</li>
+<li>considerações éticas e de governança;</li>
+<li>financiamento e conflitos de interesse;</li>
+<li>referências.</li>
+</ol>
+<p>A estrutura pode ser reduzida ou ampliada conforme a natureza do relatório, desde que a rastreabilidade metodológica seja preservada.</p>
+</section>
+<section id="introdução" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Introdução</h1>
+<p>A introdução deve delimitar o problema, explicitar sua relevância científica ou técnica e identificar a lacuna abordada pelo relatório. Afirmações metodológicas devem ser apoiadas por literatura primária ou referências de reconhecida autoridade.</p>
+<p>Como exemplo, o conceito de landmarking foi formalizado para predição dinâmica a partir de um tempo de referência<span class="citation" data-cites="vanHouwelingen2007"><sup><a href="#ref-vanHouwelingen2007" role="doc-biblioref">1</a>, pp.&nbsp;70-85</sup></span>.</p>
+</section>
+<section id="objetivo-e-questão-técnica" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Objetivo e questão técnica</h1>
+<p>O objetivo deve ser formulado de maneira verificável. Quando houver um estimando estatístico, variável resposta, horizonte temporal ou quantidade de interesse, sua definição deve aparecer explicitamente.</p>
+<p>Exemplo:</p>
+<p><span class="math display">\[
+\theta = \mathbb{E}[Y \mid X = x].
+\]</span></p>
+<p>A notação deve ser introduzida antes de sua utilização e mantida consistente ao longo do documento.</p>
+</section>
+<section id="dados-e-elegibilidade" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Dados e elegibilidade</h1>
+<p>Esta seção deve registrar:</p>
+<ul>
+<li>unidade de análise;</li>
+<li>população de referência;</li>
+<li>período de observação;</li>
+<li>regras de inclusão e exclusão;</li>
+<li>tratamento de dados ausentes;</li>
+<li>definição temporal das features;</li>
+<li>definição temporal do target;</li>
+<li>eventuais procedimentos de amostragem.</li>
+</ul>
+<p>Em dados longitudinais, deve ser explicitado o instante a partir do qual as informações são consideradas disponíveis para evitar vazamento temporal.</p>
+</section>
+<section id="métodos" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Métodos</h1>
+<p>A seção de métodos deve fornecer informação suficiente para reprodução conceitual e computacional do procedimento.</p>
+<section id="formulação-matemática" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="formulação-matemática"><span class="header-section-number">6.1</span> Formulação matemática</h2>
+<p>Equações devem representar as definições centrais do método. Para um classificador binário:</p>
+<p><span class="math display">\[
+Y_i \in \{0,1\},
+\]</span></p>
+<p>e a probabilidade condicional pode ser escrita como:</p>
+<p><span class="math display">\[
+p_i = P(Y_i = 1 \mid X_i).
+\]</span></p>
+</section>
+<section id="procedimento-computacional" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="procedimento-computacional"><span class="header-section-number">6.2</span> Procedimento computacional</h2>
+<p>Código deve ser incluído somente quando ele acrescentar informação metodológica ou permitir reprodução direta. Procedimentos extensos devem ser mantidos em arquivos auxiliares ou repositórios específicos.</p>
+</section>
+</section>
+<section id="resultados" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Resultados</h1>
+<p>Resultados devem distinguir valores observados, estimativas, intervalos de incerteza e inferências. Métricas devem ser definidas antes da interpretação.</p>
+<p>Para classificação rara, métricas dependentes da classe positiva e avaliação de calibração devem ser apresentadas quando pertinentes.</p>
+</section>
+<section id="discussão" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Discussão</h1>
+<p>A discussão deve relacionar os resultados ao objetivo técnico, à literatura e às hipóteses metodológicas. Explicações causais não devem ser inferidas de associações preditivas sem desenho apropriado.</p>
+</section>
+<section id="limitações" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Limitações</h1>
+<p>Devem ser explicitadas limitações relacionadas a dados, amostragem, generalização, validade temporal, dependência entre observações, calibração, infraestrutura computacional ou qualquer hipótese necessária para interpretação dos resultados.</p>
+</section>
+<section id="conclusão" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Conclusão</h1>
+<p>A conclusão deve sintetizar as contribuições técnicas sem introduzir resultados não apresentados anteriormente.</p>
+</section>
+<section id="tabelas" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Tabelas</h1>
+<p>Tabelas devem possuir título informativo e unidades explícitas.</p>
+<div id="tbl-example" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabela&nbsp;1: Exemplo de tabela técnica.
+</figcaption>
+<div aria-describedby="tbl-example-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Estratégia</th>
+<th>Descrição</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Método A</td>
+<td>Descrição concisa</td>
+<td>Cenário de aplicação</td>
+</tr>
+<tr class="even">
+<td>Método B</td>
+<td>Descrição concisa</td>
+<td>Cenário de aplicação</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>A Tabela <a href="#tbl-example" class="quarto-xref">Tabela&nbsp;1</a> demonstra o mecanismo de referência cruzada do Quarto.</p>
+</section>
+<section id="citações-e-referências" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Citações e referências</h1>
+<p>As referências do HTML utilizam <code>../../styles/nature.csl</code>.</p>
+<p>Uma citação simples deve ser escrita como:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@vanHouwelingen2007</span><span class="co">]</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Uma citação com localização de página:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@vanHouwelingen2007, pp. 70-85</span><span class="co">]</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Múltiplas referências:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">@vanHouwelingen2007; @hastie2009</span><span class="co">]</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>O arquivo bibliográfico deve ser mantido em BibTeX, preferencialmente em <code>references.bib</code> dentro do diretório do relatório.</p>
+</section>
+<section id="compatibilidade-com-springer-nature" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> Compatibilidade com Springer Nature</h1>
+<p>Os arquivos mantidos em <code>_extensions/nature/</code> são derivados do repositório <a href="https://github.com/christopherkenny/nature">christopherkenny/nature</a>, que adapta o template de submissão Springer Nature para Quarto.</p>
+<p>Para saída PDF, a configuração correspondente pode utilizar:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">nature-pdf</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">journal</span><span class="kw">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">cite-style</span><span class="kw">:</span><span class="at"> sn-nature</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">cite-method</span><span class="kw">:</span><span class="at"> natbib</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages.</p>
+</section>
+<section id="reprodutibilidade" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> Reprodutibilidade</h1>
+<p>O relatório deve registrar versões de software, parâmetros relevantes, sementes pseudoaleatórias quando necessárias e dependências computacionais que possam alterar os resultados.</p>
+<p>Em análises estatísticas ou de machine learning, procedimentos de validação devem respeitar a estrutura dos dados. Textos de referência em aprendizagem estatística fornecem fundamentos para separação entre ajuste, validação e avaliação<span class="citation" data-cites="hastie2009"><sup><a href="#ref-hastie2009" role="doc-biblioref">2</a></sup></span>.</p>
+</section>
+<section id="disponibilidade-de-dados-e-código" class="level1" data-number="15">
+<h1 data-number="15"><span class="header-section-number">15</span> Disponibilidade de dados e código</h1>
+<p>Deve ser informado se dados e código são públicos, restritos, confidenciais ou indisponíveis. Restrições devem ser descritas sem expor informações sensíveis.</p>
+</section>
+<section id="ética-e-governança" class="level1" data-number="16">
+<h1 data-number="16"><span class="header-section-number">16</span> Ética e governança</h1>
+<p>Quando aplicável, devem ser documentadas exigências regulatórias, aprovação ética, anonimização, governança de dados, restrições de acesso e riscos de uso.</p>
+</section>
+<section id="financiamento" class="level1" data-number="17">
+<h1 data-number="17"><span class="header-section-number">17</span> Financiamento</h1>
+<p>Declarar as fontes de financiamento ou informar explicitamente a inexistência de financiamento específico.</p>
+</section>
+<section id="conflitos-de-interesse" class="level1" data-number="18">
+<h1 data-number="18"><span class="header-section-number">18</span> Conflitos de interesse</h1>
+<p>Declarar conflitos de interesse relevantes ou informar explicitamente sua inexistência.</p>
+</section>
+<section id="checklist-de-publicação" class="level1" data-number="19">
+<h1 data-number="19"><span class="header-section-number">19</span> Checklist de publicação</h1>
+<p>Antes da publicação, verificar:</p>
+<ul>
+<li>título e resumo;</li>
+<li>autoria e afiliações;</li>
+<li>objetivo e escopo;</li>
+<li>definições matemáticas;</li>
+<li>dados e elegibilidade;</li>
+<li>métodos reprodutíveis;</li>
+<li>resultados rastreáveis;</li>
+<li>limitações;</li>
+<li>referências completas;</li>
+<li>links e referências cruzadas;</li>
+<li>disponibilidade de dados e código;</li>
+<li>ética, financiamento e conflitos de interesse;</li>
+<li>renderização HTML sem erros.</li>
+</ul>
+</section>
+<section id="referências" class="level1" data-number="20">
+<h1 data-number="20"><span class="header-section-number">20</span> Referências</h1>
+<div id="refs" class="references csl-bib-body" data-entry-spacing="0" data-line-spacing="2" role="list">
+<div id="ref-vanHouwelingen2007" class="csl-entry" role="listitem">
+<div class="csl-left-margin">1. </div><div class="csl-right-inline">Houwelingen, H. C. van. <a href="https://doi.org/10.1111/j.1467-9469.2006.00529.x">Dynamic Prediction by Landmarking in Event History Analysis</a>. <em>Scandinavian Journal of Statistics</em> <strong>34</strong>, 70–85 (2007).</div>
+</div>
+<div id="ref-hastie2009" class="csl-entry" role="listitem">
+<div class="csl-left-margin">2. </div><div class="csl-right-inline">Hastie, T., Tibshirani, R. &amp; Friedman, J. <em>The Elements of Statistical Learning: Data Mining, Inference, and Prediction</em>. (Springer, New York, 2009). doi:<a href="https://doi.org/10.1007/978-0-387-84858-7">10.1007/978-0-387-84858-7</a>.</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

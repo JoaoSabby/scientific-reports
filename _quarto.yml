@@ -1,35 +1,21 @@
 project:
-  type: website
+  type: default
   output-dir: docs
-
-website:
-  title: "Scientific Reports"
-  site-url: "https://joaosabby.github.io/scientific-reports/"
-  repo-url: "https://github.com/JoaoSabby/scientific-reports"
-  repo-actions: [source]
-  navbar:
-    left:
-      - href: index.qmd
-        text: Home
-      - href: reports/index.qmd
-        text: Reports
-    right:
-      - icon: github
-        href: "https://github.com/JoaoSabby/scientific-reports"
-        aria-label: GitHub
-  page-footer:
-    left: "Scientific and methodological reports"
-    right: "Built with Quarto"
+  resources:
+    - .nojekyll
 
 format:
   html:
     theme: cosmo
     toc: true
     toc-depth: 3
-    smooth-scroll: true
-    link-external-icon: true
-    link-external-newwindow: true
+    number-sections: true
+    anchor-sections: true
+    citations-hover: true
+    footnotes-hover: true
+    html-math-method: mathjax
     code-copy: true
+    code-overflow: wrap
 
 execute:
   freeze: auto
