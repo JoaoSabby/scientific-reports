@@ -40,8 +40,8 @@ vignettes/*.pdf
 .Renviron
 .env
 
-# pkgdown site
-# docs/ is intentionally versioned for GitHub Pages in this repository.
+# GitHub Pages output
+# docs/ is intentionally versioned in this repository.
 
 # translation temp files
 po/*~
