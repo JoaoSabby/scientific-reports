@@ -1,0 +1,16 @@
+---
+title: "Reports"
+toc: false
+---
+
+## Methodological reports
+
+### Temporal Sampling Strategies for Binary Event Prediction
+
+**Language:** Brazilian Portuguese  
+**Type:** Methodological Paper  
+**Domain:** Statistical learning, longitudinal prediction, rare events
+
+The report defines and compares Single Landmark, Multiple Landmarks, and Event-Based Sampling. It formalizes the prediction horizon, landmark structure, temporal sampling mechanism, event-based selection, repeated individual observations, and validation requirements.
+
+[Open report](temporal-sampling/index.qmd)
