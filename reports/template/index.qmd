@@ -29,6 +29,7 @@ format:
     tbl-cap-location: top
     code-copy: true
     code-overflow: wrap
+    include-after-body: ../../includes/report-downloads.html
 execute:
   echo: false
   warning: false
@@ -185,7 +186,7 @@ format:
     cite-method: natbib
 ```
 
-A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages.
+A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages. Cada relatório também é renderizado em PDF com o formato `nature-pdf`, e o HTML disponibiliza controles flutuantes para download do arquivo fonte Quarto Markdown e do PDF.
 
 # Reprodutibilidade
 
