@@ -2,10 +2,7 @@
 title: "Estratégias de Amostragem Temporal para Predição Binária de Eventos Raros"
 subtitle: "Formalização metodológica de Single Landmark, Multiple Landmarks e Event-Based Sampling"
 author:
-  - name: "Nome do autor"
-    affiliations:
-      - name: "Instituição"
-    email: "email@instituicao.br"
+  - name: "João B. G. de Brito"
 abstract: |
   A construção temporal da amostra é uma decisão metodológica central em modelos preditivos binários baseados em dados longitudinais, especialmente quando o evento de interesse é raro. Este trabalho formaliza e compara três estratégias de amostragem temporal: Single Landmark, Multiple Landmarks e Event-Based Sampling. Propõe-se uma notação unificada que separa a construção das features, o instante de referência, o horizonte de predição e o mecanismo de amostragem temporal. Para cada estratégia são definidos o estimando preditivo, a regra de construção da variável resposta, a estrutura da amostra, as condições de elegibilidade e as principais fontes de dependência, viés e desalinhamento entre treinamento e aplicação. Demonstra-se que o uso de múltiplos landmarks com janelas de predição não sobrepostas permite incorporar eventos raros reais de períodos históricos adicionais sem alterar a definição do target, embora produza observações repetidas por indivíduo e uma distribuição temporal composta. Em contraste, a amostragem orientada ao evento condiciona a escolha do tempo de referência à própria ocorrência do desfecho e, quando empregada para enriquecimento da classe positiva, modifica a distribuição amostral e exige tratamento explícito da seleção para interpretação probabilística. Apresenta-se ainda um protocolo de validação destinado à comparação das estratégias sob prevalência natural, com separação temporal, controle de dependência por indivíduo, avaliação por precision-recall, calibração e medidas de erro probabilístico. A formalização fornece uma taxonomia operacional para sistemas de machine learning destinados à predição de eventos raros em bases longitudinais.
 keywords:
@@ -16,15 +13,15 @@ keywords:
   - predição longitudinal
   - risk-set sampling
 lang: pt-BR
-bibliography: reports/temporal-sampling/references.bib
-csl: reports/temporal-sampling/nature.csl
+bibliography: references.bib
+csl: ../../styles/nature.csl
 format:
   html:
     toc: true
     toc-title: "Conteúdo"
     toc-depth: 3
     number-sections: true
-    css: reports/temporal-sampling/nature-html.css
+    css: ../../styles/nature-report.css
     anchor-sections: true
     citations-hover: true
     footnotes-hover: true

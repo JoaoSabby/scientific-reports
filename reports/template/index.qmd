@@ -1,0 +1,233 @@
+---
+title: "Template de Relatório Técnico Científico"
+subtitle: "Guia para composição de relatórios científicos em Quarto com referências no padrão Nature/Springer Nature"
+author:
+  - name: "João B. G. de Brito"
+abstract: |
+  Este documento constitui um guia reutilizável para a elaboração de relatórios técnicos científicos em Quarto. A estrutura proposta prioriza definição explícita do problema, fundamentação científica, formalização metodológica, reprodutibilidade, apresentação objetiva de resultados, discussão de limitações e rastreabilidade bibliográfica. O HTML utiliza um estilo de citações compatível com a convenção Nature, enquanto o repositório também incorpora a extensão Quarto de Springer Nature derivada do projeto christopherkenny/nature para compatibilidade futura com saída em PDF.
+keywords:
+  - relatório técnico científico
+  - Quarto
+  - Nature
+  - Springer Nature
+  - reprodutibilidade
+lang: pt-BR
+bibliography: references.bib
+csl: ../../styles/nature.csl
+format:
+  html:
+    toc: true
+    toc-title: "Conteúdo"
+    toc-depth: 3
+    number-sections: true
+    css: ../../styles/nature-report.css
+    anchor-sections: true
+    citations-hover: true
+    footnotes-hover: true
+    html-math-method: mathjax
+    fig-cap-location: bottom
+    tbl-cap-location: top
+    code-copy: true
+    code-overflow: wrap
+execute:
+  echo: false
+  warning: false
+---
+
+# Finalidade do template
+
+Este documento deve ser utilizado como guia de composição para relatórios técnicos científicos mantidos neste repositório. O objetivo não consiste em reproduzir integralmente as exigências editoriais de um periódico específico, mas em estabelecer uma estrutura científica consistente, auditável e reutilizável para publicação em HTML.
+
+A convenção bibliográfica adotada no HTML segue o estilo Nature por meio de CSL. O repositório também contém, em `_extensions/nature/`, a extensão Quarto baseada no template oficial de Springer Nature e distribuída pelo projeto [christopherkenny/nature](https://github.com/christopherkenny/nature). Essa extensão oferece suporte ao formato `nature-pdf` quando uma versão PDF for necessária.
+
+# Estrutura recomendada
+
+Um relatório técnico científico deve apresentar, quando aplicável, os seguintes componentes:
+
+1. resumo técnico;
+2. definição do problema e objetivo;
+3. fundamentação científica;
+4. dados e critérios de elegibilidade;
+5. métodos e formalização matemática;
+6. desenho experimental ou protocolo de avaliação;
+7. resultados;
+8. discussão;
+9. limitações;
+10. conclusão;
+11. disponibilidade de dados e código;
+12. considerações éticas e de governança;
+13. financiamento e conflitos de interesse;
+14. referências.
+
+A estrutura pode ser reduzida ou ampliada conforme a natureza do relatório, desde que a rastreabilidade metodológica seja preservada.
+
+# Introdução
+
+A introdução deve delimitar o problema, explicitar sua relevância científica ou técnica e identificar a lacuna abordada pelo relatório. Afirmações metodológicas devem ser apoiadas por literatura primária ou referências de reconhecida autoridade.
+
+Como exemplo, o conceito de landmarking foi formalizado para predição dinâmica a partir de um tempo de referência [@vanHouwelingen2007, pp. 70-85].
+
+# Objetivo e questão técnica
+
+O objetivo deve ser formulado de maneira verificável. Quando houver um estimando estatístico, variável resposta, horizonte temporal ou quantidade de interesse, sua definição deve aparecer explicitamente.
+
+Exemplo:
+
+$$
+\theta = \mathbb{E}[Y \mid X = x].
+$$
+
+A notação deve ser introduzida antes de sua utilização e mantida consistente ao longo do documento.
+
+# Dados e elegibilidade
+
+Esta seção deve registrar:
+
+- unidade de análise;
+- população de referência;
+- período de observação;
+- regras de inclusão e exclusão;
+- tratamento de dados ausentes;
+- definição temporal das features;
+- definição temporal do target;
+- eventuais procedimentos de amostragem.
+
+Em dados longitudinais, deve ser explicitado o instante a partir do qual as informações são consideradas disponíveis para evitar vazamento temporal.
+
+# Métodos
+
+A seção de métodos deve fornecer informação suficiente para reprodução conceitual e computacional do procedimento.
+
+## Formulação matemática
+
+Equações devem representar as definições centrais do método. Para um classificador binário:
+
+$$
+Y_i \in \{0,1\},
+$$
+
+e a probabilidade condicional pode ser escrita como:
+
+$$
+p_i = P(Y_i = 1 \mid X_i).
+$$
+
+## Procedimento computacional
+
+Código deve ser incluído somente quando ele acrescentar informação metodológica ou permitir reprodução direta. Procedimentos extensos devem ser mantidos em arquivos auxiliares ou repositórios específicos.
+
+# Resultados
+
+Resultados devem distinguir valores observados, estimativas, intervalos de incerteza e inferências. Métricas devem ser definidas antes da interpretação.
+
+Para classificação rara, métricas dependentes da classe positiva e avaliação de calibração devem ser apresentadas quando pertinentes.
+
+# Discussão
+
+A discussão deve relacionar os resultados ao objetivo técnico, à literatura e às hipóteses metodológicas. Explicações causais não devem ser inferidas de associações preditivas sem desenho apropriado.
+
+# Limitações
+
+Devem ser explicitadas limitações relacionadas a dados, amostragem, generalização, validade temporal, dependência entre observações, calibração, infraestrutura computacional ou qualquer hipótese necessária para interpretação dos resultados.
+
+# Conclusão
+
+A conclusão deve sintetizar as contribuições técnicas sem introduzir resultados não apresentados anteriormente.
+
+# Tabelas
+
+Tabelas devem possuir título informativo e unidades explícitas.
+
+| Estratégia | Descrição | Uso |
+|---|---|---|
+| Método A | Descrição concisa | Cenário de aplicação |
+| Método B | Descrição concisa | Cenário de aplicação |
+
+: Exemplo de tabela técnica. {#tbl-example}
+
+A Tabela @tbl-example demonstra o mecanismo de referência cruzada do Quarto.
+
+# Citações e referências
+
+As referências do HTML utilizam `../../styles/nature.csl`.
+
+Uma citação simples deve ser escrita como:
+
+```markdown
+[@vanHouwelingen2007]
+```
+
+Uma citação com localização de página:
+
+```markdown
+[@vanHouwelingen2007, pp. 70-85]
+```
+
+Múltiplas referências:
+
+```markdown
+[@vanHouwelingen2007; @hastie2009]
+```
+
+O arquivo bibliográfico deve ser mantido em BibTeX, preferencialmente em `references.bib` dentro do diretório do relatório.
+
+# Compatibilidade com Springer Nature
+
+Os arquivos mantidos em `_extensions/nature/` são derivados do repositório [christopherkenny/nature](https://github.com/christopherkenny/nature), que adapta o template de submissão Springer Nature para Quarto.
+
+Para saída PDF, a configuração correspondente pode utilizar:
+
+```yaml
+format:
+  nature-pdf:
+    journal:
+      cite-style: sn-nature
+    cite-method: natbib
+```
+
+A publicação padrão deste repositório permanece em HTML. Portanto, o CSL Nature compartilhado é o mecanismo principal de formatação bibliográfica para os relatórios publicados no GitHub Pages.
+
+# Reprodutibilidade
+
+O relatório deve registrar versões de software, parâmetros relevantes, sementes pseudoaleatórias quando necessárias e dependências computacionais que possam alterar os resultados.
+
+Em análises estatísticas ou de machine learning, procedimentos de validação devem respeitar a estrutura dos dados. Textos de referência em aprendizagem estatística fornecem fundamentos para separação entre ajuste, validação e avaliação [@hastie2009].
+
+# Disponibilidade de dados e código
+
+Deve ser informado se dados e código são públicos, restritos, confidenciais ou indisponíveis. Restrições devem ser descritas sem expor informações sensíveis.
+
+# Ética e governança
+
+Quando aplicável, devem ser documentadas exigências regulatórias, aprovação ética, anonimização, governança de dados, restrições de acesso e riscos de uso.
+
+# Financiamento
+
+Declarar as fontes de financiamento ou informar explicitamente a inexistência de financiamento específico.
+
+# Conflitos de interesse
+
+Declarar conflitos de interesse relevantes ou informar explicitamente sua inexistência.
+
+# Checklist de publicação
+
+Antes da publicação, verificar:
+
+- título e resumo;
+- autoria e afiliações;
+- objetivo e escopo;
+- definições matemáticas;
+- dados e elegibilidade;
+- métodos reprodutíveis;
+- resultados rastreáveis;
+- limitações;
+- referências completas;
+- links e referências cruzadas;
+- disponibilidade de dados e código;
+- ética, financiamento e conflitos de interesse;
+- renderização HTML sem erros.
+
+# Referências
+
+:::{#refs}
+:::

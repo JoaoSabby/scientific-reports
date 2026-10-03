@@ -1,102 +1,47 @@
 # Scientific Reports
 
-## Purpose
+This repository organizes scientific research as version-controlled scientific technical reports. Reports are authored in Quarto, published as standalone HTML pages, and structured to support reproducibility, formal technical writing, mathematical notation, and scientific referencing.
 
-This repository provides a version-controlled collection of scientific, methodological, and technical reports in statistics, machine learning, data science, predictive modeling, and related computational disciplines.
+## Reports
 
-The repository is designed to support reproducible technical communication. Each report is maintained as an independent Quarto document with its own bibliography, figures, tables, and report-specific resources when required. Shared repository-level configuration is used only for elements that are common to the complete collection.
+### Estratégias de Amostragem Temporal para Predição Binária de Eventos Raros
 
-The HTML output is intended for publication through GitHub Pages. Source documents remain available together with the rendered material so that methodological definitions, mathematical notation, references, and subsequent revisions can be audited through Git history.
+Methodological report on Single Landmark, Multiple Landmarks, and Event-Based Sampling for longitudinal binary event prediction, with emphasis on rare-event settings.
 
-## Repository structure
+[![Open HTML report](https://img.shields.io/badge/Open-HTML_report-1f6feb?logo=html5&logoColor=white)](https://joaosabby.github.io/scientific-reports/reports/temporal-sampling/)
+[![Share on WhatsApp](https://img.shields.io/badge/Share-WhatsApp-25D366?logo=whatsapp&logoColor=white)](https://wa.me/?text=Estrat%C3%A9gias%20de%20Amostragem%20Temporal%20para%20Predi%C3%A7%C3%A3o%20Bin%C3%A1ria%20de%20Eventos%20Raros%0AJo%C3%A3o%20B.%20G.%20de%20Brito%0Ahttps%3A%2F%2Fjoaosabby.github.io%2Fscientific-reports%2Freports%2Ftemporal-sampling%2F)
 
-```text
-scientific-reports/
-├── _quarto.yml
-├── index.qmd
-├── reports/
-│   ├── index.qmd
-│   └── <report-slug>/
-│       ├── index.qmd
-│       ├── references.bib
-│       ├── figures/
-│       ├── tables/
-│       └── report-specific resources
-└── docs/
-    └── rendered GitHub Pages website
-```
-
-The `reports/` directory is the canonical location for report source material. A report should remain self-contained unless a resource is demonstrably shared by multiple reports.
-
-## Current reports
-
-### Temporal Sampling Strategies for Binary Event Prediction
-
-A methodological paper formalizing and comparing Single Landmark, Multiple Landmarks, and Event-Based Sampling for longitudinal binary event prediction, with particular attention to rare-event settings.
-
-Source:
+Direct link:
 
 ```text
-reports/temporal-sampling/
+https://joaosabby.github.io/scientific-reports/reports/temporal-sampling/
 ```
 
-## Authoring model
+Source: `reports/temporal-sampling/index.qmd`
 
-The repository is implemented as a Quarto website. Reports are written in Quarto Markdown and rendered to HTML.
+## Report template
 
-The standard local workflow is:
+### Template de Relatório Técnico Científico
 
-```bash
-quarto preview
+A reusable Quarto guide for composing scientific technical reports and applying Nature/Springer Nature citation conventions.
+
+[![Open HTML template](https://img.shields.io/badge/Open-HTML_template-1f6feb?logo=html5&logoColor=white)](https://joaosabby.github.io/scientific-reports/reports/template/)
+[![Share on WhatsApp](https://img.shields.io/badge/Share-WhatsApp-25D366?logo=whatsapp&logoColor=white)](https://wa.me/?text=Template%20de%20Relat%C3%B3rio%20T%C3%A9cnico%20Cient%C3%ADfico%0AJo%C3%A3o%20B.%20G.%20de%20Brito%0Ahttps%3A%2F%2Fjoaosabby.github.io%2Fscientific-reports%2Freports%2Ftemplate%2F)
+
+Direct link:
+
+```text
+https://joaosabby.github.io/scientific-reports/reports/template/
 ```
 
-For a complete production render:
+Source: `reports/template/index.qmd`
+
+## Rendering
+
+Render all reports from the repository root:
 
 ```bash
 quarto render
 ```
 
-Rendered files are written to:
-
-```text
-docs/
-```
-
-This output directory is intentionally versioned because GitHub Pages can publish the site directly from the `docs/` directory of the `main` branch.
-
-## Report organization
-
-A new report should normally be created under:
-
-```text
-reports/<report-slug>/
-```
-
-The preferred source filename is `index.qmd`, which produces a stable directory-based URL after rendering.
-
-Report-specific bibliographies, citation styles, figures, tables, and supplementary files should remain within the corresponding report directory whenever practical. This design limits cross-report coupling and allows an individual report to evolve without modifying unrelated reports.
-
-## Reproducibility
-
-A methodological or empirical report should document, when applicable:
-
-- the scientific or technical objective;
-- the statistical estimand or prediction target;
-- data eligibility and temporal definitions;
-- feature construction rules;
-- sampling design;
-- validation strategy;
-- evaluation metrics;
-- software and execution requirements;
-- bibliographic sources;
-- data availability;
-- code availability;
-- ethical or governance constraints.
-
-Empirical claims should not be introduced without traceable evidence. Report source files and rendered outputs should be committed together when a publication version is updated.
-
-## Versioning policy
-
-Git history is the primary audit trail for changes to reports. Substantive methodological revisions should be committed separately from formatting-only changes whenever feasible.
-
-A report that evolves into an independent software package, research project, journal submission with a substantial computational codebase, or separately governed collaborative project may be migrated to a dedicated repository. The present repository is intended primarily for reports that share a common publication and documentation framework.
+Generated HTML files are written to `docs/` for publication with GitHub Pages.
