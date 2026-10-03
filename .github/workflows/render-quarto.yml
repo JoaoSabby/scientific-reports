@@ -1,0 +1,44 @@
+name: Render Quarto reports
+
+on:
+  push:
+    branches:
+      - main
+      - refactor-report-catalog-template
+    paths-ignore:
+      - "docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.10.18"
+
+      - name: Render reports
+        run: quarto render
+
+      - name: Preserve GitHub Pages configuration
+        run: touch docs/.nojekyll
+
+      - name: Commit rendered HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "No rendered changes."
+          else
+            git commit -m "Render Quarto HTML reports [skip ci]"
+            git push
+          fi
